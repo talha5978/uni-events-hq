@@ -23,6 +23,6 @@ export default defineConfig({
 		"process.env.API_BASE_URL": JSON.stringify(process.env.API_BASE_URL),
 	},
 	server: {
-		port: 5174,
+		port: 5173,
 	},
 });

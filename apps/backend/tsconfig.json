@@ -1,6 +1,6 @@
 {
 	"extends": "../../tsconfig.json",
-	"references": [{ "path": "../../packages/db" }],
+	"references": [{ "path": "../../packages/db" }, { "path": "../../packages/auth" }],
 	"include": ["src"],
 	"exclude": ["dist", "node_modules", "build"],
 	"compilerOptions": {

@@ -12,7 +12,7 @@ export async function server(fastify: FastifyInstance) {
 	await fastify.register(errorHandlerPlugin);
 
 	await fastify.register(fastifyCors, {
-		origin: [process.env.WEB_URL!],
+		origin: [process.env.ADMIN_URL!, process.env.WEB_URL!],
 		methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 		credentials: true,
 		allowedHeaders: ["Content-Type", "Authorization"],
