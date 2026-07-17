@@ -1,0 +1,43 @@
+{
+	"$schema": "https://turbo.build/schema.json",
+	"globalEnv": [
+		"NODE_ENV",
+		"VITE_ENV",
+		"BACKEND_PORT",
+		"ADMIN_URL",
+		"WEB_URL",
+		"API_BASE_URL",
+		"PG_CONNECTION_STRING",
+		"JWT_SECRET",
+		"JWT_EXPIRES_IN",
+		"CLOUDINARY_CLOUD_NAME",
+		"CLOUDINARY_API_KEY",
+		"CLOUDINARY_API_SECRET"
+	],
+	"tasks": {
+		"build": {
+			"dependsOn": ["^build"],
+			"outputs": [".react-router/**", "dist/**", "build/**"]
+		},
+		"dev": {
+			"cache": false,
+			"persistent": true
+		},
+		"start": {
+			"cache": false,
+			"persistent": true
+		},
+		"format": {
+			"cache": false
+		},
+		"db:generate": {
+			"cache": false
+		},
+		"db:migrate": {
+			"cache": false
+		},
+		"db:push": {
+			"cache": false
+		}
+	}
+}

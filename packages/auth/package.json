@@ -1,0 +1,25 @@
+{
+	"name": "@uni-events-hq/auth",
+	"version": "1.0.0",
+	"private": false,
+	"scripts": {
+		"build:esm": "tsup src/index.ts --format esm",
+		"build:types": "echo 'export * from \"../src/index.js\";' > dist/index.d.ts",
+		"build": "pnpm build:esm && pnpm build:types"
+	},
+	"types": "dist/index.d.ts",
+	"main": "dist/index.js",
+	"module": "dist/index.js",
+	"type": "module",
+	"devDependencies": {
+		"@types/bcryptjs": "^3.0.0",
+		"@types/jsonwebtoken": "^9.0.10",
+		"@types/node": "^26.1.0",
+		"tsup": "^8.5.1",
+		"typescript": "^5.9.3"
+	},
+	"dependencies": {
+		"bcryptjs": "^3.0.3",
+		"jsonwebtoken": "^9.0.3"
+	}
+}
