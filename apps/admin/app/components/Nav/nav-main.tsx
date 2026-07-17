@@ -21,20 +21,15 @@ export function NavMain() {
 
 						return (
 							<SidebarMenuItem key={item.title}>
-								<SidebarMenuButton
-									tooltip={item.title}
-									className={`w-full ${isActive ? "bg-sidebar-accent" : ""}`}
-								>
-									<NavLink
-										to={item.url}
-										prefetch="intent"
-										viewTransition
-										className={"flex items-center gap-2 rounded-md pl-1 pr-2 py-1"}
+								<NavLink to={item.url} prefetch="intent" viewTransition>
+									<SidebarMenuButton
+										tooltip={item.title}
+										className={`cursor-pointer ${isActive ? "bg-sidebar-accent" : ""}`}
 									>
 										{item.icon && <>{item.icon}</>}
 										<span className="my-auto">{item.title}</span>
-									</NavLink>
-								</SidebarMenuButton>
+									</SidebarMenuButton>
+								</NavLink>
 							</SidebarMenuItem>
 						);
 					})}
