@@ -1,5 +1,5 @@
 import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Search, Check, Hourglass } from "lucide-react";
+import { MoreHorizontal, Search, Check, Hourglass, AlertTriangle, RefreshCw } from "lucide-react";
 import { Form, Link, type LoaderFunctionArgs, useLoaderData, useLocation, useNavigation } from "react-router";
 import { createApiClient } from "~/api/client";
 import { createStudentsApi } from "~/api/students.api";
@@ -161,8 +161,32 @@ export default function AdminStudentsPage() {
 	});
 
 	if (!loaderData.success) {
+		const error = loaderData.error;
 		return (
-			<div className="p-6 text-destructive">Failed to load students: {loaderData.error.message}</div>
+			<div className="flex h-[70vh] items-center justify-center p-6">
+				<div className="max-w-md w-full text-center">
+					<div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
+						<AlertTriangle className="h-10 w-10 text-destructive" />
+					</div>
+
+					<h2 className="text-2xl font-semibold tracking-tight mb-2">Something went wrong</h2>
+
+					<p className="text-muted-foreground mb-6">
+						{error.message || "Failed to load students. Please try again."}
+					</p>
+
+					<div className="flex flex-col sm:flex-row gap-3 justify-center">
+						<Button onClick={() => window.location.reload()} variant="default">
+							<RefreshCw className="mr-2 h-4 w-4" />
+							Retry
+						</Button>
+
+						<Button variant="outline" asChild>
+							<Link to="/dashboard">Go to Dashboard</Link>
+						</Button>
+					</div>
+				</div>
+			</div>
 		);
 	}
 
