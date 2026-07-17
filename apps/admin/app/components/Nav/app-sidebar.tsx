@@ -18,8 +18,8 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<Link to="/" viewTransition prefetch="viewport">
-							<div className="w-52 h-fit -mx-9 select-none">
-								<img src="/logo.png" className="w-52 h-fit mix-blend-multiply" alt="" />
+							<div className="w-44 h-fit select-none">
+								<img src="/logo.png" className="w-44 h-fit mix-blend-multiply" alt="" />
 							</div>
 						</Link>
 					</SidebarMenuItem>
