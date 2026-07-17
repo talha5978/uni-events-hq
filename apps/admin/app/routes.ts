@@ -7,6 +7,9 @@ export default [
 		index("routes/home.tsx"),
 		...prefix("students", [index("./routes/Students/students.tsx")]),
 
-		...prefix("societies", [route("create", "./routes/Societies/create-society.tsx")]),
+		...prefix("societies", [
+			index("./routes/Societies/index.tsx"),
+			route("create", "./routes/Societies/create-society.tsx"),
+		]),
 	]),
 ] satisfies RouteConfig;

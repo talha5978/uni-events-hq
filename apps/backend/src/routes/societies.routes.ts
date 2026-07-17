@@ -1,5 +1,5 @@
 import { societies } from "@uni-events-hq/db";
-import { eq } from "drizzle-orm";
+import { count, desc, eq } from "drizzle-orm";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { authMiddleware, requireRole } from "~/middlewares/auth.middleware";
 import { ApiError } from "~/utils/ApiError";
@@ -63,6 +63,45 @@ export async function societiesRoutes(fastify: FastifyInstance) {
 				.returning();
 
 			return reply.success({ society: newSociety }, "Society created successfully", 201);
+		},
+	);
+
+	fastify.get(
+		"/admin/list",
+		{ preHandler: [authMiddleware, requireRole(["admin"])] },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const { pageSize = "12" } = request.query as { pageSize?: string };
+
+			const limit = parseInt(pageSize);
+			const offset = 0; // Always start from beginning (as per your requirement)
+
+			const societiesData = await fastify.db
+				.select({
+					id: societies.id,
+					name: societies.name,
+					description: societies.description,
+					logoUrl: societies.logoUrl,
+					category: societies.category,
+					createdAt: societies.createdAt,
+				})
+				.from(societies)
+				.orderBy(desc(societies.createdAt))
+				.limit(limit)
+				.offset(offset);
+
+			const totalResult = await fastify.db.select({ count: count() }).from(societies);
+
+			const total = Number(totalResult[0]?.count || 0);
+
+			return reply.success({
+				societies: societiesData,
+				pagination: {
+					page: 1,
+					pageSize: limit,
+					total,
+					hasMore: total > limit,
+				},
+			});
 		},
 	);
 }
