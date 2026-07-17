@@ -8,6 +8,8 @@ import helmet from "@fastify/helmet";
 import csrf from "@fastify/csrf-protection";
 import multipart from "@fastify/multipart";
 import { studentsRoutes } from "~/routes/students.routes";
+import { mediaRoutes } from "~/routes/media.routes";
+import { societiesRoutes } from "~/routes/societies.routes";
 
 export async function server(fastify: FastifyInstance) {
 	await fastify.register(errorHandlerPlugin);
@@ -49,5 +51,7 @@ export async function server(fastify: FastifyInstance) {
 	fastify.decorate("db", dbConnection.db);
 
 	await fastify.register(authRoutes, { prefix: "/api/auth" });
+	await fastify.register(mediaRoutes, { prefix: "/api/media" });
 	await fastify.register(studentsRoutes, { prefix: "/api/students" });
+	await fastify.register(societiesRoutes, { prefix: "/api/societies" });
 }

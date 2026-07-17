@@ -20,7 +20,7 @@ export interface CloudinaryUploadResponse {
  */
 export const uploadToCloudinary = async (
 	file: Buffer | Readable,
-	folder: string = "users/avatars",
+	folder: string = "uni-events-hq",
 	options: { width?: number; height?: number; crop?: string } = {},
 ): Promise<CloudinaryUploadResponse> => {
 	return new Promise((resolve, reject) => {

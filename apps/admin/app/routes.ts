@@ -6,5 +6,7 @@ export default [
 	layout("./routes/protected-layout.tsx", [
 		index("routes/home.tsx"),
 		...prefix("students", [index("./routes/Students/students.tsx")]),
+
+		...prefix("societies", [route("create", "./routes/Societies/create-society.tsx")]),
 	]),
 ] satisfies RouteConfig;
