@@ -10,6 +10,7 @@ export default [
 		index("routes/home.tsx"),
 		route("my-society", "./routes/my-society.tsx"),
 
+		route("society-events", "./routes/Events/society-events.tsx"),
 		route("society-events/create", "./routes/Events/create-event.tsx"),
 	]),
 ] satisfies RouteConfig;

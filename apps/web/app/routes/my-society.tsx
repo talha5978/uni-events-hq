@@ -68,7 +68,7 @@ export default function SocietyDetailPage() {
 						</p>
 					</div>
 					<div className="flex items-center gap-2">
-						<Link to="/events" viewTransition>
+						<Link to="/society-events" viewTransition>
 							<Button variant={"outline"}>
 								<ArrowUpRightFromSquare className="mr-2 h-4 w-4" />
 								Events

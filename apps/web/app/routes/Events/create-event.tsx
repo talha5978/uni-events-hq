@@ -142,7 +142,7 @@ export default function CreateEventPage() {
 
 			if (res.success) {
 				toast.success("Event created successfully!");
-				navigate(`/societies/${societyId}/events`);
+				navigate(`/society-events`);
 			} else {
 				toast.error(res.error?.message || "Failed to create event");
 			}

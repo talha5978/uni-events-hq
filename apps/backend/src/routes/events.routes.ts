@@ -1,5 +1,5 @@
 import { events, societyMembers } from "@uni-events-hq/db";
-import { and, eq, or } from "drizzle-orm";
+import { and, desc, eq, or } from "drizzle-orm";
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { requireRole, studentAuthMiddleware } from "~/middlewares/auth.middleware";
 import { ApiError } from "~/utils/ApiError";
@@ -97,6 +97,26 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 				.returning();
 
 			return reply.success({ event: newEvent }, "Event created successfully", 201);
+		},
+	);
+
+	fastify.get(
+		"/current-user",
+		{ preHandler: [studentAuthMiddleware, requireRole(["president"])] },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			let societyId = request.user?.societyId;
+
+			if (!societyId) {
+				throw new ApiError("Society ID not found in user session", 400, "NO_SOCIETY_ID");
+			}
+
+			const eventsList = await fastify.db
+				.select()
+				.from(events)
+				.where(eq(events.societyId, societyId))
+				.orderBy(desc(events.eventDate));
+
+			return reply.success({ events: eventsList }, "Society events retrieved successfully");
 		},
 	);
 }

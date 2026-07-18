@@ -1,5 +1,6 @@
 import type { ApiResponse } from "~/types/response";
 import { createApiClient } from "~/api/client";
+import type { Event } from "@uni-events-hq/db";
 
 export function createEventsApi(client = createApiClient()) {
 	return {
@@ -25,6 +26,16 @@ export function createEventsApi(client = createApiClient()) {
 			return await client.request<ApiResponse<{ event: any }>>(`/events/${societyId}`, {
 				method: "POST",
 				body: JSON.stringify(body),
+			});
+		},
+
+		async getMySocietyEvents() {
+			return await client.request<
+				ApiResponse<{
+					events: Event[];
+				}>
+			>("/events/current-user", {
+				method: "GET",
 			});
 		},
 	};
