@@ -172,7 +172,7 @@ export default function UpdateSocietySheet({ societyId, initialData, onSuccess }
 									<FormLabel>Category</FormLabel>
 									<Select onValueChange={field.onChange} value={field.value}>
 										<FormControl>
-											<SelectTrigger>
+											<SelectTrigger className="w-full">
 												<SelectValue />
 											</SelectTrigger>
 										</FormControl>

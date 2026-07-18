@@ -403,4 +403,36 @@ export async function societiesRoutes(fastify: FastifyInstance) {
 			return reply.success({ society: updatedSociety }, "Society updated successfully");
 		},
 	);
+
+	fastify.get(
+		"/admin/:id/members",
+		{
+			preHandler: [adminAuthMiddleware, requireRole(["admin"])],
+		},
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const { id: societyId } = request.params as { id: string };
+
+			const currentMembers = await fastify.db
+				.select({
+					id: users.id,
+					fullName: users.fullName,
+					email: users.email,
+					studentId: users.studentId,
+					department: users.department,
+					batch: users.batch,
+					societyRole: societyMembers.role,
+				})
+				.from(users)
+				.innerJoin(societyMembers, eq(users.id, societyMembers.userId))
+				.where(and(eq(societyMembers.societyId, societyId), eq(users.isVerified, true)))
+				.orderBy(users.fullName);
+
+			return reply.success(
+				{
+					members: currentMembers,
+				},
+				"Society members retrieved successfully",
+			);
+		},
+	);
 }

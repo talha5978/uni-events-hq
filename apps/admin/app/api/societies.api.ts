@@ -63,6 +63,24 @@ export function createSocietiesApi(client = createApiClient()) {
 			return await client.request<ApiResponse<StudentsListMin>>(url, { method: "GET" });
 		},
 
+		async getSocietyMembers(societyId: string) {
+			return await client.request<
+				ApiResponse<{
+					members: {
+						id: string;
+						fullName: string;
+						email: string;
+						studentId: string | null;
+						department: string | null;
+						batch: string | null;
+						societyRole: SocietyRole;
+					}[];
+				}>
+			>(`/societies/admin/${societyId}/members`, {
+				method: "GET",
+			});
+		},
+
 		async manageMember(
 			societyId: string,
 			body: {

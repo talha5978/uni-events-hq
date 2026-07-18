@@ -30,7 +30,6 @@ export default function SocietyDetailPage() {
 	const revalidator = useRevalidator();
 	const loaderData = useLoaderData<typeof loader>();
 	const societyData = loaderData.success ? loaderData.data : null;
-	const [_, setRefreshKey] = useState(0);
 	const [initialData, setInitialData] = useState<Society | null>(null);
 
 	if (!societyData) {
@@ -158,12 +157,10 @@ export default function SocietyDetailPage() {
 							<CardTitle className="flex items-center justify-between">
 								<div className="flex items-center gap-3">
 									<Users className="h-5 w-5" />
-									Members
+									Members ({societyData.membersCount})
 								</div>
 								<div>
-									<span className="text-sm font-normal text-muted-foreground">
-										{societyData.membersCount} total
-									</span>
+									<AddMembersSheet societyId={society.id} icon={true} />
 								</div>
 							</CardTitle>
 						</CardHeader>
@@ -209,12 +206,7 @@ export default function SocietyDetailPage() {
 								) : (
 									<div className="flex py-8 items-center flex-col gap-3 justify-center">
 										<p className="text-muted-foreground">No members added yet.</p>
-										<AddMembersSheet
-											societyId={society.id}
-											onSuccess={() => {
-												setRefreshKey((prev) => prev + 1);
-											}}
-										/>
+										<AddMembersSheet societyId={society.id} />
 									</div>
 								)}
 							</div>
@@ -257,7 +249,7 @@ export default function SocietyDetailPage() {
 														</p>
 													)}
 												</div>
-												<Badge>{event.status}</Badge>
+												<Badge>{event.status.toUpperCase()}</Badge>
 											</div>
 										</div>
 									))}

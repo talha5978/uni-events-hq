@@ -23,7 +23,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const meta = () => {
-	return [{ title: "Events | Student Portal" }];
+	return [{ title: "Events | Admin Portal" }];
 };
 
 const getStatusConfig = (status: string) => {
@@ -70,8 +70,8 @@ export default function SocietyEventsPage() {
 	return (
 		<div className="sm:p-6 p-4 ">
 			<div className="mb-8">
-				<h1 className="text-3xl sm:text-4xl font-bold tracking-tight">My Society Events</h1>
-				<p className="text-muted-foreground mt-1">Manage and track all your society's events</p>
+				<h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Events</h1>
+				<p className="text-muted-foreground mt-1">Track all society's events and activities</p>
 			</div>
 
 			{events.length === 0 ? (
@@ -79,8 +79,7 @@ export default function SocietyEventsPage() {
 					<Calendar className="h-16 w-16 text-muted-foreground mb-4 opacity-50" />
 					<h3 className="text-xl font-medium">No events yet</h3>
 					<p className="text-muted-foreground mt-2 max-w-sm text-center">
-						You haven't created any events for your society yet. Click the button above to get
-						started.
+						No events have been created yet. Click the button above to get started.
 					</p>
 				</div>
 			) : (
