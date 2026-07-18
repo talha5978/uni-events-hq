@@ -219,11 +219,15 @@ export async function societiesRoutes(fastify: FastifyInstance) {
 						userId,
 						role,
 					});
+
+					await fastify.db.update(users).set({ role: "society_head" }).where(eq(users.id, userId));
 				}
 			} else if (action === "remove") {
 				await fastify.db
 					.delete(societyMembers)
 					.where(and(eq(societyMembers.societyId, societyId), eq(societyMembers.userId, userId)));
+
+				await fastify.db.update(users).set({ role: "student" }).where(eq(users.id, userId));
 			}
 
 			return reply.success(
