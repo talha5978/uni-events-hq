@@ -279,6 +279,69 @@ export async function societiesRoutes(fastify: FastifyInstance) {
 	);
 
 	fastify.get(
+		"/members",
+		{ preHandler: [studentAuthMiddleware, requireRole(["president", "treasurer", "member"])] },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const societyId = request.user?.societyId;
+
+			if (!societyId) {
+				throw new ApiError("Society not associated with user", 400, "NO_SOCIETY_ID");
+			}
+
+			const { pageIndex = "0", pageSize = "12" } = request.query as {
+				pageIndex?: string;
+				pageSize?: string;
+			};
+
+			const page = parseInt(pageIndex);
+			const limit = parseInt(pageSize);
+			const offset = page * limit;
+
+			const members = await fastify.db
+				.select({
+					id: societyMembers.id,
+					role: societyMembers.role,
+					joinedAt: societyMembers.joinedAt,
+					fullName: users.fullName,
+					studentId: users.studentId,
+					batch: users.batch,
+					department: users.department,
+				})
+				.from(societyMembers)
+				.leftJoin(users, eq(societyMembers.userId, users.id))
+				.where(eq(societyMembers.societyId, societyId))
+				.orderBy(
+					sql`CASE 
+						WHEN ${societyMembers.role} = 'president' THEN 1 
+						WHEN ${societyMembers.role} = 'treasurer' THEN 2 
+						ELSE 3 
+					END`,
+					societyMembers.joinedAt,
+				)
+				.limit(limit)
+				.offset(offset);
+
+			const totalResult = await fastify.db
+				.select({ count: count() })
+				.from(societyMembers)
+				.where(eq(societyMembers.societyId, societyId));
+
+			const total = Number(totalResult[0]?.count || 0);
+
+			return reply.success({
+				members,
+				pagination: {
+					page: page + 1,
+					pageSize: limit,
+					total,
+					pageCount: Math.ceil(total / limit),
+					hasMore: total > (page + 1) * limit,
+				},
+			});
+		},
+	);
+
+	fastify.get(
 		"/:id/edit",
 		{
 			schema: { params: { type: "object", properties: { id: { type: "string" } } } },

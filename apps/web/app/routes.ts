@@ -8,9 +8,11 @@ export default [
 
 	layout("./routes/protected-layout.tsx", [
 		index("routes/home.tsx"),
-		route("my-society", "./routes/my-society.tsx"),
+		route("my-society", "./routes/Societies/my-society.tsx"),
 
 		route("society-events", "./routes/Events/society-events.tsx"),
 		route("society-events/create", "./routes/Events/create-event.tsx"),
+
+		route("society-members", "./routes/Societies/society-members.tsx"),
 	]),
 ] satisfies RouteConfig;

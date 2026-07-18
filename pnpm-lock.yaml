@@ -457,6 +457,9 @@ importers:
             "@react-router/serve":
                 specifier: 8.0.0
                 version: 8.0.0(react-router@8.0.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@5.9.3)
+            "@tanstack/react-table":
+                specifier: ^8.21.3
+                version: 8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
             "@uni-events-hq/auth":
                 specifier: workspace:*
                 version: link:../../packages/auth
@@ -478,6 +481,9 @@ importers:
             lucide-react:
                 specifier: ^1.24.0
                 version: 1.24.0(react@19.2.7)
+            motion:
+                specifier: ^12.42.2
+                version: 12.42.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
             next-themes:
                 specifier: ^0.4.6
                 version: 0.4.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
