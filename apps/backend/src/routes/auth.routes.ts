@@ -225,6 +225,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 					password: users.password,
 					role: users.role,
 					societyRole: societyMembers.role,
+					societyId: societyMembers.societyId,
 					isVerified: users.isVerified,
 				})
 				.from(users)
@@ -264,6 +265,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 				email: user.email,
 				name: user.fullName,
 				role: finalRole,
+				societyId: user.societyId ?? undefined,
 			});
 
 			const refreshToken = jwtService.generateRefreshToken(user.id);

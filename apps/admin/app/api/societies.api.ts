@@ -31,7 +31,7 @@ export function createSocietiesApi(client = createApiClient()) {
 
 			if (query.pageSize !== undefined) params.append("pageSize", query.pageSize.toString());
 
-			const url = `/societies/admin/list${params.toString() ? `?${params.toString()}` : ""}`;
+			const url = `/societies/list${params.toString() ? `?${params.toString()}` : ""}`;
 
 			return await client.request<ApiResponse<SocietiesResponse>>(url, {
 				method: "GET",

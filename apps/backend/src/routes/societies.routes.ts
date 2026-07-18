@@ -1,7 +1,7 @@
 import { events, societies, societyBankAccounts, societyMembers, users } from "@uni-events-hq/db";
 import { and, count, desc, eq, sql } from "drizzle-orm";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { adminAuthMiddleware, requireRole } from "~/middlewares/auth.middleware";
+import { adminAuthMiddleware, requireRole, studentAuthMiddleware } from "~/middlewares/auth.middleware";
 import { ApiError } from "~/utils/ApiError";
 
 export async function societiesRoutes(fastify: FastifyInstance) {
@@ -67,8 +67,8 @@ export async function societiesRoutes(fastify: FastifyInstance) {
 	);
 
 	fastify.get(
-		"/admin/list",
-		{ preHandler: [adminAuthMiddleware, requireRole(["admin"])] },
+		"/list",
+		{ preHandler: [adminAuthMiddleware] },
 		async (request: FastifyRequest, reply: FastifyReply) => {
 			const { pageSize = "12" } = request.query as { pageSize?: string };
 
@@ -182,6 +182,47 @@ export async function societiesRoutes(fastify: FastifyInstance) {
 				events: eventsList,
 				membersCount: totalMembers,
 				hasMoreMembers: totalMembers > limit,
+			});
+		},
+	);
+
+	fastify.get(
+		"/student/current",
+		{
+			preHandler: [studentAuthMiddleware, requireRole(["president"])],
+		},
+		async (request, reply) => {
+			const id = request.user?.societyId;
+
+			if (!id) {
+				throw new ApiError("Society not found", 404, "SOCIETY_NOT_FOUND");
+			}
+
+			const society = await fastify.db.query.societies.findFirst({
+				where: eq(societies.id, id),
+			});
+
+			if (!society) {
+				throw new ApiError("Society not found", 404, "SOCIETY_NOT_FOUND");
+			}
+
+			// Bank Accounts
+			const bankAccounts = await fastify.db
+				.select()
+				.from(societyBankAccounts)
+				.where(eq(societyBankAccounts.societyId, id))
+				.orderBy(desc(societyBankAccounts.createdAt));
+
+			const eventsList = await fastify.db
+				.select()
+				.from(events)
+				.where(eq(events.societyId, id))
+				.orderBy(events.eventDate);
+
+			return reply.success({
+				society,
+				bankAccounts,
+				events: eventsList,
 			});
 		},
 	);

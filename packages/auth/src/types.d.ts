@@ -5,4 +5,5 @@ export type UserPayload = {
 	name: string;
 	role: UserRole;
 	email: string;
+	societyId?: string;
 };
