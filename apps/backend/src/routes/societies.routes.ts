@@ -186,7 +186,6 @@ export async function societiesRoutes(fastify: FastifyInstance) {
 		},
 	);
 
-	// POST /societies/:societyId/members
 	fastify.post(
 		"/:societyId/members",
 		{
@@ -231,6 +230,69 @@ export async function societiesRoutes(fastify: FastifyInstance) {
 				{ userId },
 				action === "add" ? "Member added successfully" : "Member removed successfully",
 			);
+		},
+	);
+
+	fastify.get(
+		"/:id/edit",
+		{
+			schema: { params: { type: "object", properties: { id: { type: "string" } } } },
+			preHandler: [authMiddleware, requireRole(["admin"])],
+		},
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const { id } = request.params as { id: string };
+
+			const society = await fastify.db.query.societies.findFirst({
+				where: eq(societies.id, id),
+			});
+
+			if (!society) {
+				throw new ApiError("Society not found", 404, "SOCIETY_NOT_FOUND");
+			}
+
+			return reply.success({ society }, "Society details fetched successfully");
+		},
+	);
+
+	// PUT /societies/:id
+	fastify.put(
+		"/:id/edit",
+		{
+			schema: { params: { type: "object", properties: { id: { type: "string" } } } },
+			preHandler: [authMiddleware, requireRole(["admin"])],
+		},
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const { id } = request.params as { id: string };
+			const { name, description, category, logoUrl, bannerUrl } = request.body as {
+				name: string;
+				description?: string;
+				category?: string;
+				logoUrl?: string;
+				bannerUrl?: string;
+			};
+
+			const society = await fastify.db.query.societies.findFirst({
+				where: eq(societies.id, id),
+			});
+
+			if (!society) {
+				throw new ApiError("Society not found", 404, "SOCIETY_NOT_FOUND");
+			}
+
+			const [updatedSociety] = await fastify.db
+				.update(societies)
+				.set({
+					name: name.trim(),
+					description: description?.trim() || null,
+					category: category?.trim() || null,
+					logoUrl: logoUrl || society.logoUrl,
+					bannerUrl: bannerUrl || society.bannerUrl,
+					updatedAt: new Date(),
+				})
+				.where(eq(societies.id, id))
+				.returning();
+
+			return reply.success({ society: updatedSociety }, "Society updated successfully");
 		},
 	);
 }

@@ -79,5 +79,27 @@ export function createSocietiesApi(client = createApiClient()) {
 				},
 			);
 		},
+
+		async getSocietyForEdit(id: string) {
+			return await client.request<ApiResponse<{ society: Society }>>(`/societies/${id}/edit`, {
+				method: "GET",
+			});
+		},
+
+		async update(
+			id: string,
+			body: {
+				name: string;
+				description?: string | null;
+				category?: string | null;
+				logoUrl?: string | null;
+				bannerUrl?: string | null;
+			},
+		) {
+			return await client.request<ApiResponse<{ society: Society }>>(`/societies/${id}/edit`, {
+				method: "PUT",
+				body: JSON.stringify(body),
+			});
+		},
 	};
 }

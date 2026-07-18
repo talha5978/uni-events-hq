@@ -1,13 +1,15 @@
-import { useLoaderData, Link, useParams, type LoaderFunctionArgs } from "react-router";
-import { Building2, Users, CreditCard, Calendar, Edit, ArrowLeft, PlusCircle, User } from "lucide-react";
+import { useLoaderData, Link, type LoaderFunctionArgs, useRevalidator } from "react-router";
+import { Building2, Users, CreditCard, Calendar, ArrowLeft, User } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { createApiClient } from "~/api/client";
 import { createSocietiesApi } from "~/api/societies.api";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AddMembersSheet from "~/components/Society/AddMembersSheet";
 import { toast } from "sonner";
+import type { Society } from "@uni-events-hq/db";
+import UpdateSocietySheet from "~/components/Society/EditSocietySheet";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const cookieHeader = request.headers.get("Cookie") ?? "";
@@ -25,15 +27,34 @@ export const meta = () => {
 };
 
 export default function SocietyDetailPage() {
+	const revalidator = useRevalidator();
 	const loaderData = useLoaderData<typeof loader>();
 	const societyData = loaderData.success ? loaderData.data : null;
-	const [refreshKey, setRefreshKey] = useState(0);
+	const [_, setRefreshKey] = useState(0);
+	const [initialData, setInitialData] = useState<Society | null>(null);
 
 	if (!societyData) {
 		return <div className="p-8 text-center">Society not found</div>;
 	}
 
 	const { society, members, bankAccounts, events } = societyData;
+
+	async function handleSocietyFetch() {
+		const societyApi = createSocietiesApi();
+		const d = await societyApi.getSocietyForEdit(society.id);
+		if (d.success) {
+			setInitialData(d.data.society);
+		} else {
+			toast.error("Error fetching society");
+			return;
+		}
+
+		setInitialData(d.data.society);
+	}
+
+	useEffect(() => {
+		handleSocietyFetch();
+	}, []);
 
 	return (
 		<div className="p-6 max-w-7xl mx-auto">
@@ -54,10 +75,15 @@ export default function SocietyDetailPage() {
 						</p>
 					</div>
 				</div>
-				<Button>
-					<Edit className="mr-2 h-4 w-4" />
-					Edit Society
-				</Button>
+				{initialData && (
+					<UpdateSocietySheet
+						initialData={initialData}
+						societyId={society.id}
+						onSuccess={() => {
+							revalidator.revalidate();
+						}}
+					/>
+				)}
 			</div>
 
 			<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
