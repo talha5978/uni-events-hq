@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { createApiClient } from "~/api/client";
 import { createEventsApi } from "~/api/events.api";
 import { useLoaderData, Link } from "react-router";
-import { Calendar, MapPin, Users, Ticket, Clock, AlertCircle, ArrowUpRight } from "lucide-react";
+import { Calendar, MapPin, Users, Ticket, Clock, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardFooter } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -15,7 +15,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	client.setCookie(cookieHeader);
 
 	const eventsApi = createEventsApi(client);
-	const data = await eventsApi.getMySocietyEvents();
+	const data = await eventsApi.getEvents({
+		pageSize: 12,
+		status: "active",
+	});
 
 	return data;
 };
@@ -61,26 +64,16 @@ const getStatusConfig = (status: string) => {
 	}
 };
 
-export default function SocietyEventsPage() {
+export default function EventsPage() {
 	const loaderData = useLoaderData<typeof loader>();
 	const events = loaderData.success ? loaderData.data.events : [];
 
 	return (
-		<RoleGuard allowedRoles={["president"]}>
+		<RoleGuard allowedRoles={["treasurer", "student", "member"]}>
 			<div className="sm:p-6 p-4 ">
-				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-					<div>
-						<h1 className="text-3xl sm:text-4xl font-bold tracking-tight">My Society Events</h1>
-						<p className="text-muted-foreground mt-1">
-							Manage and track all your society's events
-						</p>
-					</div>
-					<Link to="create">
-						<Button className="w-full sm:w-auto">
-							<Calendar className="mr-2 h-5 w-5" />
-							Create New Event
-						</Button>
-					</Link>
+				<div className="mb-8">
+					<h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Events</h1>
+					<p className="text-muted-foreground mt-1">Track all society's events and activities</p>
 				</div>
 
 				{events.length === 0 ? (
@@ -88,8 +81,7 @@ export default function SocietyEventsPage() {
 						<Calendar className="h-10 w-10 text-muted-foreground mb-4 opacity-50" />
 						<h3 className="text-xl font-medium">No events yet</h3>
 						<p className="text-muted-foreground mt-2 max-w-sm text-center">
-							You haven't created any events for your society yet. Click the button above to get
-							started.
+							No events found. Checkout later for updates.
 						</p>
 					</div>
 				) : (
@@ -204,18 +196,10 @@ export default function SocietyEventsPage() {
 									</CardContent>
 
 									<CardFooter className="px-4 pt-0 gap-3">
-										<Link to={`/events/${event.id}/manage`} className="flex-1">
-											<Button className="w-full" variant="outline">
-												Manage
-											</Button>
-										</Link>
-										<Link
-											to={`/event-registrations?eventId=${event.id}`}
-											className="flex-1"
-										>
+										<Link to={`/register-event/${event.id}`} className="flex-1">
 											<Button className="w-full">
-												Registrations
-												<ArrowUpRight className="w-4 h-4" />
+												<Calendar className="w-4 h-4" />
+												Register
 											</Button>
 										</Link>
 									</CardFooter>

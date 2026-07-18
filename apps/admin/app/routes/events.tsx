@@ -76,7 +76,7 @@ export default function SocietyEventsPage() {
 
 			{events.length === 0 ? (
 				<div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-muted-foreground/20 rounded-2xl bg-muted/10">
-					<Calendar className="h-16 w-16 text-muted-foreground mb-4 opacity-50" />
+					<Calendar className="h-10 w-10 text-muted-foreground mb-4 opacity-50" />
 					<h3 className="text-xl font-medium">No events yet</h3>
 					<p className="text-muted-foreground mt-2 max-w-sm text-center">
 						No events have been created yet. Click the button above to get started.

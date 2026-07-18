@@ -14,5 +14,7 @@ export default [
 		route("society-events/create", "./routes/Events/create-event.tsx"),
 
 		route("society-members", "./routes/Societies/society-members.tsx"),
+
+		route("events", "./routes/Events/events.tsx"),
 	]),
 ] satisfies RouteConfig;
