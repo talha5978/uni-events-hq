@@ -1,7 +1,7 @@
 import { users, societyMembers, type UserRole } from "@uni-events-hq/db";
 import { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
 import { eq, and } from "drizzle-orm";
-import { comparePassword, jwtService } from "@uni-events-hq/auth";
+import { comparePassword, hashPassword, jwtService } from "@uni-events-hq/auth";
 import { ApiError } from "~/utils/ApiError";
 import { adminAuthMiddleware, studentAuthMiddleware } from "~/middlewares/auth.middleware";
 import { convertExpiresInToSeconds } from "~/utils/time";
@@ -293,6 +293,71 @@ export async function authRoutes(fastify: FastifyInstance) {
 				},
 				"Signed in successfully",
 			);
+		},
+	);
+
+	fastify.post(
+		"/student/signup",
+		{
+			schema: {
+				body: {
+					type: "object",
+					required: [
+						"fullName",
+						"email",
+						"studentId",
+						"password",
+						"department",
+						"batch",
+						"section",
+					],
+					properties: {
+						fullName: { type: "string" },
+						email: { type: "string", format: "email" },
+						studentId: { type: "string" },
+						password: { type: "string" },
+						department: { type: "string" },
+						batch: { type: "string" },
+						section: { type: "string" },
+					},
+				},
+			},
+		},
+		async (request, reply) => {
+			const body = request.body as {
+				fullName: string;
+				email: string;
+				studentId: string;
+				password: string;
+				department: string;
+				batch: string;
+				section: string;
+			};
+
+			const existingUser = await fastify.db
+				.select()
+				.from(users)
+				.where(and(eq(users.email, body.email), eq(users.studentId, body.studentId)))
+				.limit(1);
+
+			if (existingUser.length > 0) {
+				throw new ApiError("User with this email already exists", 409, "EMAIL_EXISTS");
+			}
+
+			const hashedPassword = await hashPassword(body.password);
+
+			await fastify.db.insert(users).values({
+				fullName: body.fullName,
+				email: body.email,
+				studentId: body.studentId,
+				password: hashedPassword,
+				department: body.department,
+				batch: body.batch,
+				section: body.section,
+				isVerified: false,
+			});
+
+			return reply.success(null, "Account created successfully. Pending admin verification", 201);
 		},
 	);
 

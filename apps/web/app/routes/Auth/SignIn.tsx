@@ -1,12 +1,12 @@
 import { Loader, LogIn } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { useState } from "react";
 import { createAuthApi } from "~/api/auth.api";
@@ -114,6 +114,19 @@ export default function SignIn() {
 						</form>
 					</Form>
 				</CardContent>
+				<CardFooter className="flex justify-center border-t p-4 mt-2">
+					<p className="text-sm text-muted-foreground">
+						Want to create an account?{" "}
+						<Link
+							to="/sign-up"
+							viewTransition
+							prefetch="intent"
+							className="text-primary font-medium hover:underline"
+						>
+							Sign Up
+						</Link>
+					</p>
+				</CardFooter>
 			</Card>
 		</div>
 	);

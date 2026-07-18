@@ -25,6 +25,21 @@ export function createAuthApi(client = createApiClient()) {
 			});
 		},
 
+		async signUp(data: {
+			fullName: string;
+			email: string;
+			studentId: string;
+			password: string;
+			department: string;
+			batch: string;
+			section: string;
+		}) {
+			return await client.request<ApiResponse<null>>("/auth/student/signup", {
+				method: "POST",
+				body: JSON.stringify(data),
+			});
+		},
+
 		async logout() {
 			return await client.request("/auth/signout?isAdmin=false", {
 				method: "POST",
