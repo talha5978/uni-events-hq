@@ -14,8 +14,8 @@ export async function authMiddleware(request: FastifyRequest) {
 		token = extractToken(request.headers.authorization);
 	}
 
-	console.log("Cookies received:", request.cookies);
-	console.log("Auth Token from cookie:", token);
+	// console.log("Cookies received:", request.cookies);
+	// console.log("Auth Token from cookie:", token);
 
 	if (!token) {
 		throw new ApiError("Authentication required", 401, "NO_TOKEN");

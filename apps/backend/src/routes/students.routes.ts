@@ -1,7 +1,8 @@
 import { users } from "@uni-events-hq/db";
-import { and, count, desc, ilike, or, ne } from "drizzle-orm";
+import { and, count, desc, ilike, or, ne, eq } from "drizzle-orm";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { authMiddleware, requireRole } from "~/middlewares/auth.middleware";
+import { ApiError } from "~/utils/ApiError";
 
 export async function studentsRoutes(fastify: FastifyInstance) {
 	fastify.get(
@@ -72,6 +73,44 @@ export async function studentsRoutes(fastify: FastifyInstance) {
 					pageCount: Math.ceil(total / limit),
 				},
 			});
+		},
+	);
+
+	fastify.post(
+		"/admin/toggle-verify/:studentId",
+		{
+			schema: {
+				params: {
+					type: "object",
+					properties: {
+						studentId: { type: "string" },
+					},
+				},
+			},
+			preHandler: [authMiddleware, requireRole(["admin"])],
+		},
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const { studentId } = request.params as { studentId: string };
+
+			const [student] = await fastify.db
+				.select({ isVerified: users.isVerified })
+				.from(users)
+				.where(eq(users.id, studentId))
+				.limit(1);
+
+			if (!student) {
+				throw new ApiError("Student not found", 404, "STUDENT_NOT_FOUND");
+			}
+
+			await fastify.db
+				.update(users)
+				.set({ isVerified: !student.isVerified })
+				.where(eq(users.id, studentId));
+
+			return reply.success(
+				null,
+				`Student ${student.isVerified ? "unverified" : "verified"} successfully`,
+			);
 		},
 	);
 }

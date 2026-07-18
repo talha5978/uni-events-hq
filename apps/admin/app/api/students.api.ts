@@ -25,5 +25,12 @@ export function createStudentsApi(client = createApiClient()) {
 				method: "GET",
 			});
 		},
+
+		async toggleVerification(studentId: string) {
+			return await client.request<ApiResponse<null>>(`/students/admin/toggle-verify/${studentId}`, {
+				method: "POST",
+				body: JSON.stringify({}),
+			});
+		},
 	};
 }

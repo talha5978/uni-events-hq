@@ -38,16 +38,13 @@ export default function AdminSocietiesPage() {
 
 	return (
 		<div className="p-6">
-			<div className="flex items-center justify-between mb-8">
-				<div className="flex items-center gap-4">
-					<Building2 className="w-8 h-8 text-primary" />
-					<div>
-						<h1 className="text-3xl font-semibold tracking-tight">Societies</h1>
-						<p className="text-muted-foreground">Manage all university societies</p>
-					</div>
+			<div className="flex items-center flex-wrap gap-4 justify-between mb-8">
+				<div>
+					<h1 className="text-3xl font-semibold tracking-tight">Societies</h1>
+					<p className="text-muted-foreground">Manage all university societies</p>
 				</div>
 
-				<Link to="/societies/create" viewTransition prefetch="intent">
+				<Link to="/societies/create" className="ml-auto" viewTransition prefetch="intent">
 					<Button>
 						<PlusCircle className="mr-1 h-4 w-4" />
 						Create New Society

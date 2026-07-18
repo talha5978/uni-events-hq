@@ -1,6 +1,8 @@
 import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, Search, Check, Hourglass, AlertTriangle, RefreshCw } from "lucide-react";
+import { useRevalidator } from "react-router";
 import { Form, Link, type LoaderFunctionArgs, useLoaderData, useLocation, useNavigation } from "react-router";
+import { toast } from "sonner";
 import { createApiClient } from "~/api/client";
 import { createStudentsApi } from "~/api/students.api";
 import { DataTable, DataTableSkeleton, TableColumnsToggle } from "~/components/Table/data-table";
@@ -47,12 +49,24 @@ export default function AdminStudentsPage() {
 
 	const navigation = useNavigation();
 	const location = useLocation();
+	const revalidator = useRevalidator();
 
 	const isFetching = navigation.state === "loading" && navigation.location?.pathname === location.pathname;
 
 	const studentsData = loaderData.success ? loaderData.data : null;
 	const students = studentsData?.students ?? [];
 	const pagination = studentsData?.pagination;
+
+	async function toggleVerification(studentId: string) {
+		const studentsApi = createStudentsApi();
+		const resp = await studentsApi.toggleVerification(studentId);
+		if (resp.success) {
+			toast.success(resp.message);
+			revalidator.revalidate();
+		} else {
+			toast.error(resp.error.message || "Something went wrong. Please try again.");
+		}
+	}
 
 	const tableColumns: ColumnDef<StudentListResponse["students"][number]>[] = [
 		{
@@ -127,9 +141,14 @@ export default function AdminStudentsPage() {
 							</Link>
 
 							{!student.isVerified ? (
-								<DropdownMenuItem>Verify Account</DropdownMenuItem>
+								<DropdownMenuItem onClick={() => toggleVerification(student.id)}>
+									Verify Account
+								</DropdownMenuItem>
 							) : (
-								<DropdownMenuItem className="text-destructive">
+								<DropdownMenuItem
+									className="text-destructive"
+									onClick={() => toggleVerification(student.id)}
+								>
 									Revoke Access
 								</DropdownMenuItem>
 							)}
