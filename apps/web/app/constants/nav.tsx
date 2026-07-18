@@ -11,6 +11,13 @@ export const navLinks: NavItem[] = [
 		title: "Events",
 		url: "/events",
 		icon: <Calendar size={18} />,
+		allowedRoles: ["treasurer", "student", "member"],
+	},
+	{
+		title: "Events",
+		url: "/society-events",
+		icon: <Calendar size={18} />,
+		allowedRoles: ["president"],
 	},
 	{
 		title: "My Registrations",

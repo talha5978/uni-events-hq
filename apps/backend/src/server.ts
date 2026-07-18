@@ -10,6 +10,7 @@ import multipart from "@fastify/multipart";
 import { studentsRoutes } from "~/routes/students.routes";
 import { mediaRoutes } from "~/routes/media.routes";
 import { societiesRoutes } from "~/routes/societies.routes";
+import { eventsRoutes } from "~/routes/events.routes";
 
 export async function server(fastify: FastifyInstance) {
 	await fastify.register(errorHandlerPlugin);
@@ -54,4 +55,5 @@ export async function server(fastify: FastifyInstance) {
 	await fastify.register(mediaRoutes, { prefix: "/api/media" });
 	await fastify.register(studentsRoutes, { prefix: "/api/students" });
 	await fastify.register(societiesRoutes, { prefix: "/api/societies" });
+	await fastify.register(eventsRoutes, { prefix: "/api/events" });
 }
