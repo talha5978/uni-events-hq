@@ -18,6 +18,8 @@ export function createEventsApi(client = createApiClient()) {
 				ticketPrice?: number | null;
 				maxParticipants?: number | null;
 				rules?: string[];
+				hasMultipleSlots?: boolean;
+				timeslots?: { startTime: string; endTime: string }[];
 			},
 		) {
 			return await client.request<ApiResponse<{ event: any }>>(`/events/${societyId}`, {

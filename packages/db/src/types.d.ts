@@ -36,6 +36,11 @@ export type NewSocietyMember = InferInsertModel<typeof db.societyMembers>;
 export type Event = InferSelectModel<typeof db.events>;
 export type NewEvent = InferInsertModel<typeof db.events>;
 
+export type Timeslot = {
+	startTime: string;
+	endTime: string;
+};
+
 // Event Registrations
 export type EventRegistration = InferSelectModel<typeof db.eventRegistrations>;
 export type NewEventRegistration = InferInsertModel<typeof db.eventRegistrations>;

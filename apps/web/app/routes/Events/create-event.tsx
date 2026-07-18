@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { useNavigate, useRouteLoaderData } from "react-router";
 import { Button } from "~/components/ui/button";
@@ -8,7 +8,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Switch } from "~/components/ui/switch";
-import { Calendar } from "~/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { CalendarIcon, Upload, Loader, Trash2, Plus } from "lucide-react";
 import { format } from "date-fns";
@@ -32,6 +31,16 @@ const eventFormSchema = z.object({
 	maxParticipants: z.number().min(1).optional(),
 	rules: z.array(z.string().min(1, "Rule cannot be empty")).default([]).optional(),
 	banner: z.instanceof(File).optional(),
+	hasMultipleSlots: z.boolean().default(false).optional(),
+	timeslots: z
+		.array(
+			z.object({
+				startTime: z.string(),
+				endTime: z.string(),
+			}),
+		)
+		.default([])
+		.optional(),
 });
 
 type EventFormValues = z.infer<typeof eventFormSchema>;
@@ -56,14 +65,31 @@ export default function CreateEventPage() {
 			maxParticipants: undefined,
 			ticketPrice: 0,
 			title: "",
+			hasMultipleSlots: false,
+			timeslots: [],
 		},
 	});
 
-	const { fields, append, remove } = useFieldArray({
+	const {
+		fields: rulesFields,
+		append: appendRule,
+		remove: removeRule,
+	} = useFieldArray({
 		control: form.control,
-		//@ts-ignore
-		name: "rules",
+		// @ts-ignore
+		name: "rules" as const,
 	});
+
+	const {
+		fields: timeslotFields,
+		append: appendTimeslot,
+		remove: removeTimeslot,
+	} = useFieldArray({
+		control: form.control,
+		name: "timeslots" as const,
+	});
+
+	const hasMultipleSlots = useWatch({ control: form.control, name: "hasMultipleSlots" });
 
 	const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -108,6 +134,8 @@ export default function CreateEventPage() {
 				maxParticipants: values.maxParticipants,
 				rules: values.rules || [],
 				bannerUrl,
+				hasMultipleSlots: values.hasMultipleSlots,
+				timeslots: values.timeslots ?? [],
 			};
 
 			const res = await eventsApi.createEvent(societyId!, payload);
@@ -167,7 +195,7 @@ export default function CreateEventPage() {
 											<Textarea
 												rows={5}
 												placeholder="Describe your event..."
-												className="resize-none min-h-[150px]"
+												className="resize-none min-h-37.5"
 												{...field}
 											/>
 										</FormControl>
@@ -344,8 +372,107 @@ export default function CreateEventPage() {
 									</FormItem>
 								)}
 							/>
+
+							<FormField
+								control={form.control}
+								name="hasMultipleSlots"
+								render={({ field }) => (
+									<FormItem className="flex items-center justify-between rounded-lg border p-4">
+										<div>
+											<FormLabel>Multiple Time Slots</FormLabel>
+											<p className="text-sm text-muted-foreground">
+												Event has different time slots (workshops, sessions, etc.)
+											</p>
+										</div>
+										<FormControl>
+											<Switch checked={field.value} onCheckedChange={field.onChange} />
+										</FormControl>
+									</FormItem>
+								)}
+							/>
 						</CardContent>
 					</Card>
+
+					{hasMultipleSlots && (
+						<Card>
+							<CardHeader>
+								<CardTitle className="flex items-center justify-between">
+									Time Slots
+									<Button
+										type="button"
+										variant="outline"
+										size="icon-sm"
+										onClick={() => appendTimeslot({ startTime: "", endTime: "" })}
+									>
+										<Plus />
+									</Button>
+								</CardTitle>
+								<CardDescription>
+									Define different sessions or time slots for this event
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<div className="space-y-4">
+									{timeslotFields.map((field, index) => (
+										<div
+											key={field.id}
+											className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end border rounded-lg p-4"
+										>
+											<div className="md:col-span-5">
+												<FormField
+													control={form.control}
+													name={`timeslots.${index}.startTime`}
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>Start Time</FormLabel>
+															<FormControl>
+																<Input type="time" {...field} />
+															</FormControl>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+											</div>
+
+											<div className="md:col-span-5">
+												<FormField
+													control={form.control}
+													name={`timeslots.${index}.endTime`}
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>End Time</FormLabel>
+															<FormControl>
+																<Input type="time" {...field} />
+															</FormControl>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+											</div>
+
+											<div className="md:col-span-2">
+												<Button
+													type="button"
+													variant="ghost"
+													size="icon"
+													className="text-destructive"
+													onClick={() => removeTimeslot(index)}
+												>
+													<Trash2 className="h-4 w-4" />
+												</Button>
+											</div>
+										</div>
+									))}
+
+									{timeslotFields.length === 0 && (
+										<p className="text-muted-foreground text-center py-8">
+											No time slots added yet.
+										</p>
+									)}
+								</div>
+							</CardContent>
+						</Card>
+					)}
 
 					<Card>
 						<CardHeader>
@@ -355,7 +482,8 @@ export default function CreateEventPage() {
 									type="button"
 									variant="outline"
 									size="icon-sm"
-									onClick={() => append(" ")}
+									// @ts-ignore
+									onClick={() => appendRule(" ")}
 								>
 									<Plus />
 								</Button>
@@ -366,7 +494,7 @@ export default function CreateEventPage() {
 						</CardHeader>
 						<CardContent>
 							<div className="space-y-3">
-								{fields.map((field, index) => (
+								{rulesFields.map((field, index) => (
 									<div key={field.id} className="flex gap-3 items-start">
 										<FormField
 											control={form.control}
@@ -388,14 +516,14 @@ export default function CreateEventPage() {
 											variant="ghost"
 											size="icon"
 											className="mt-1 text-destructive hover:bg-destructive/10"
-											onClick={() => remove(index)}
+											onClick={() => removeRule(index)}
 										>
 											<Trash2 className="h-4 w-4" />
 										</Button>
 									</div>
 								))}
 
-								{fields.length === 0 && (
+								{rulesFields.length === 0 && (
 									<p className="text-muted-foreground text-center py-8">
 										No rules added yet.
 									</p>
