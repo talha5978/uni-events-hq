@@ -1,7 +1,10 @@
-import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
-
+import { data, isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import type { Route } from "./+types/root";
 import "./app.css";
+import { Toaster } from "~/components/ui/sonner";
+import { createAuthApi } from "~/api/auth.api";
+import { createApiClient } from "~/api/client";
+import { TopLoadingBar } from "~/components/Loaders/TopLoadingBar";
 
 export const links: Route.LinksFunction = () => [
 	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -16,9 +19,39 @@ export const links: Route.LinksFunction = () => [
 	},
 ];
 
+export const loader = async ({ request }: Route.LoaderArgs) => {
+	try {
+		const cookieHeader = request.headers.get("Cookie") ?? "";
+
+		const client = createApiClient();
+		client.setCookie(cookieHeader);
+		const authApi = createAuthApi(client);
+
+		const user = await authApi.me();
+
+		return data(
+			{
+				user,
+				isAuthenticated: user.success || false,
+			},
+			{
+				headers: {
+					"Set-Cookie": authApi.client.getCookie(),
+				},
+			},
+		);
+	} catch (error) {
+		console.error(error);
+		return data({
+			user: null,
+			isAuthenticated: false,
+		});
+	}
+};
+
 export function Layout({ children }: { children: React.ReactNode }) {
 	return (
-		<html lang="en">
+		<html lang="en" suppressHydrationWarning>
 			<head>
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -35,7 +68,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-	return <Outlet />;
+	return (
+		<>
+			<Outlet />
+			<Toaster />
+			<TopLoadingBar />
+		</>
+	);
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
@@ -47,7 +86,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 		message = error.status === 404 ? "404" : "Error";
 		details =
 			error.status === 404 ? "The requested page could not be found." : error.statusText || details;
-	} else if (import.meta.env.DEV && error && error instanceof Error) {
+	} else if (process.env.VITE_ENV === "development" && error && error instanceof Error) {
 		details = error.message;
 		stack = error.stack;
 	}

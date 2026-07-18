@@ -1,3 +1,4 @@
+import { useRouteLoaderData } from "react-router";
 import type { Route } from "./+types/home";
 
 export function meta({}: Route.MetaArgs) {
@@ -5,5 +6,7 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-	return;
+	const data = useRouteLoaderData("root");
+
+	return <>{JSON.stringify(data)}</>;
 }

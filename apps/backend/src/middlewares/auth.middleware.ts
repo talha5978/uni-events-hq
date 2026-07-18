@@ -7,15 +7,33 @@ function extractToken(authHeader?: string): string | null {
 	return authHeader.substring(7);
 }
 
-export async function authMiddleware(request: FastifyRequest) {
-	let token: string | null = request.cookies?.authToken || null;
+export async function adminAuthMiddleware(request: FastifyRequest) {
+	let token: string | null = request.cookies?.adminAuthToken || null;
 
 	if (!token) {
 		token = extractToken(request.headers.authorization);
 	}
 
-	// console.log("Cookies received:", request.cookies);
-	// console.log("Auth Token from cookie:", token);
+	if (!token) {
+		throw new ApiError("Authentication required", 401, "NO_TOKEN");
+	}
+
+	try {
+		request.user = jwtService.verifyToken(token);
+	} catch (err: any) {
+		if (err.name === "TokenExpiredError") {
+			throw new ApiError("Token expired", 401, "TOKEN_EXPIRED");
+		}
+		throw new ApiError("Invalid token", 401, "INVALID_TOKEN");
+	}
+}
+
+export async function studentAuthMiddleware(request: FastifyRequest) {
+	let token: string | null = request.cookies?.studentAuthToken || null;
+
+	if (!token) {
+		token = extractToken(request.headers.authorization);
+	}
 
 	if (!token) {
 		throw new ApiError("Authentication required", 401, "NO_TOKEN");

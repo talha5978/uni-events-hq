@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { PlusCircle, User, Crown, DollarSign, Search, Loader, MoreHorizontal } from "lucide-react";
+import { PlusCircle, User, Crown, DollarSign, Loader, MoreHorizontal } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
 	Sheet,
@@ -10,7 +10,6 @@ import {
 	SheetTrigger,
 } from "~/components/ui/sheet";
 import { Input } from "~/components/ui/input";
-import { Badge } from "~/components/ui/badge";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Separator } from "~/components/ui/separator";
 import { createApiClient } from "~/api/client";
@@ -39,7 +38,6 @@ export default function AddMembersSheet({ societyId, onSuccess }: AddMembersShee
 	const [pageIndex, setPageIndex] = useState(0);
 	const [students, setStudents] = useState<Student[]>([]);
 	const [pagination, setPagination] = useState<any>(null);
-	const [isLoading, setIsLoading] = useState(false);
 	const [isLoadingMore, setIsLoadingMore] = useState(false);
 
 	const [president, setPresident] = useState<Student | null>(null);
@@ -47,7 +45,6 @@ export default function AddMembersSheet({ societyId, onSuccess }: AddMembersShee
 	const [generalMembers, setGeneralMembers] = useState<Student[]>([]);
 
 	const fetchStudents = async (reset = false) => {
-		setIsLoading(true);
 		const client = createApiClient();
 		const api = createSocietiesApi(client);
 
@@ -65,7 +62,6 @@ export default function AddMembersSheet({ societyId, onSuccess }: AddMembersShee
 			}
 			setPagination(res.data.pagination);
 		}
-		setIsLoading(false);
 		setIsLoadingMore(false);
 	};
 
@@ -243,7 +239,7 @@ export default function AddMembersSheet({ societyId, onSuccess }: AddMembersShee
 							</span>
 						</h3>
 
-						<ScrollArea className="h-[420px] pr-4">
+						<ScrollArea className="h-105 pr-4">
 							<div className="space-y-3">
 								{students.map((student) => (
 									<div
@@ -251,7 +247,7 @@ export default function AddMembersSheet({ societyId, onSuccess }: AddMembersShee
 										className="flex items-center justify-between p-4 border rounded-xl hover:bg-muted/50 transition-all group"
 									>
 										<div className="flex items-center gap-4 flex-1 min-w-0">
-											<div className="w-11 h-11 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+											<div className="w-11 h-11 rounded-full bg-muted flex items-center justify-center shrink-0">
 												<User className="h-5 w-5 text-muted-foreground" />
 											</div>
 

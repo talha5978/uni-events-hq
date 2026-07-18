@@ -3,11 +3,21 @@ import { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fa
 import { eq, and } from "drizzle-orm";
 import { comparePassword, jwtService } from "@uni-events-hq/auth";
 import { ApiError } from "~/utils/ApiError";
-import { authMiddleware } from "~/middlewares/auth.middleware";
+import { adminAuthMiddleware, studentAuthMiddleware } from "~/middlewares/auth.middleware";
 import { convertExpiresInToSeconds } from "~/utils/time";
+import type { CookieSerializeOptions } from "@fastify/csrf-protection";
 
 export async function authRoutes(fastify: FastifyInstance) {
-	fastify.get("/me", { preHandler: authMiddleware }, async (request, reply) => {
+	fastify.get("/admin/me", { preHandler: adminAuthMiddleware }, async (request, reply) => {
+		return reply.success(
+			{
+				user: request.user,
+			},
+			"User retrieved successfully",
+		);
+	});
+
+	fastify.get("/student/me", { preHandler: studentAuthMiddleware }, async (request, reply) => {
 		return reply.success(
 			{
 				user: request.user,
@@ -17,7 +27,8 @@ export async function authRoutes(fastify: FastifyInstance) {
 	});
 
 	fastify.post("/refresh-token", async (request: FastifyRequest, reply: FastifyReply) => {
-		const refreshToken = request.cookies?.refreshToken;
+		const isAdminRefresh = !!request.cookies?.adminRefreshToken;
+		const refreshToken = request.cookies?.adminRefreshToken || request.cookies?.studentRefreshToken;
 
 		if (!refreshToken) {
 			throw new ApiError("Refresh token required", 401, "NO_REFRESH_TOKEN");
@@ -62,8 +73,11 @@ export async function authRoutes(fastify: FastifyInstance) {
 
 			const newRefreshToken = jwtService.generateRefreshToken(user.id);
 
+			const authCookieName = isAdminRefresh ? "adminAuthToken" : "studentAuthToken";
+			const refreshCookieName = isAdminRefresh ? "adminRefreshToken" : "studentRefreshToken";
+
 			// Set new cookies
-			reply.setCookie("authToken", newAccessToken, {
+			reply.setCookie(authCookieName, newAccessToken, {
 				httpOnly: true,
 				secure: process.env.NODE_ENV === "production",
 				sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
@@ -71,7 +85,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 				path: "/",
 			});
 
-			reply.setCookie("refreshToken", newRefreshToken, {
+			reply.setCookie(refreshCookieName, newRefreshToken, {
 				httpOnly: true,
 				secure: process.env.NODE_ENV === "production",
 				sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
@@ -81,8 +95,8 @@ export async function authRoutes(fastify: FastifyInstance) {
 
 			return reply.success(null, "Token refreshed successfully", 200);
 		} catch (err) {
-			reply.clearCookie("authToken");
-			reply.clearCookie("refreshToken");
+			reply.clearCookie("adminAuthToken").clearCookie("adminRefreshToken");
+			reply.clearCookie("studentAuthToken").clearCookie("studentRefreshToken");
 			throw new ApiError("Session expired. Please login again", 401, "SESSION_EXPIRED");
 		}
 	});
@@ -157,7 +171,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 			const refreshToken = jwtService.generateRefreshToken(user.id);
 
 			// Set cookies
-			reply.setCookie("authToken", accessTokenData, {
+			reply.setCookie("adminAuthToken", accessTokenData, {
 				httpOnly: true,
 				secure: process.env.NODE_ENV === "production",
 				sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
@@ -165,7 +179,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 				path: "/",
 			});
 
-			reply.setCookie("refreshToken", refreshToken, {
+			reply.setCookie("adminRefreshToken", refreshToken, {
 				httpOnly: true,
 				secure: process.env.NODE_ENV === "production",
 				sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
@@ -183,22 +197,126 @@ export async function authRoutes(fastify: FastifyInstance) {
 	);
 
 	fastify.post(
-		"/signout",
-		{ preHandler: authMiddleware },
-		async (_: FastifyRequest, reply: FastifyReply) => {
-			reply.clearCookie("authToken", {
-				path: "/",
-				httpOnly: true,
-				secure: process.env.NODE_ENV === "production",
-				sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+		"/student/signin",
+		{
+			schema: {
+				body: {
+					type: "object",
+					required: ["email", "password"],
+					properties: {
+						email: { type: "string", format: "email" },
+						password: { type: "string" },
+					},
+				},
+			},
+		},
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const body = request.body as {
+				email: string;
+				password: string;
+			};
+
+			// Find user
+			const [user] = await fastify.db
+				.select({
+					id: users.id,
+					fullName: users.fullName,
+					email: users.email,
+					password: users.password,
+					role: users.role,
+					societyRole: societyMembers.role,
+					isVerified: users.isVerified,
+				})
+				.from(users)
+				.leftJoin(societyMembers, and(eq(societyMembers.userId, users.id)))
+				.where(eq(users.email, body.email))
+				.limit(1);
+
+			if (!user) {
+				throw new ApiError("Invalid credentials.", 401, "INVALID_CREDENTIALS");
+			}
+
+			if (user.role && user.role === "admin") {
+				throw new ApiError("You are not allowed to sign in", 404, "INVALID_DATA");
+			}
+
+			if (!user.isVerified) {
+				throw new ApiError("Your application is not verified yet.", 404, "NOT_VERIFIED");
+			}
+
+			const isPasswordValid = await comparePassword(body.password, user.password);
+
+			if (!isPasswordValid) {
+				throw new ApiError("Invalid credentials", 401, "INVALID_CREDENTIALS");
+			}
+
+			let finalRole: UserRole;
+
+			if (user.role === "society_head" && user.societyRole) {
+				finalRole = user.societyRole;
+			} else {
+				finalRole = user.role as UserRole;
+			}
+
+			// Generate tokens
+			const accessTokenData = jwtService.generateToken({
+				id: user.id,
+				email: user.email,
+				name: user.fullName,
+				role: finalRole,
 			});
 
-			reply.clearCookie("refreshToken", {
+			const refreshToken = jwtService.generateRefreshToken(user.id);
+
+			// Set cookies
+			reply.setCookie("studentAuthToken", accessTokenData, {
+				httpOnly: true,
+				secure: process.env.NODE_ENV === "production",
+				sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+				maxAge: convertExpiresInToSeconds(process.env.JWT_EXPIRES_IN),
+				path: "/",
+			});
+
+			reply.setCookie("studentRefreshToken", refreshToken, {
+				httpOnly: true,
+				secure: process.env.NODE_ENV === "production",
+				sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+				maxAge: 30 * 24 * 60 * 60,
+				path: "/",
+			});
+
+			return reply.success(
+				{
+					user: accessTokenData,
+				},
+				"Signed in successfully",
+			);
+		},
+	);
+
+	/** Signout */
+	fastify.post(
+		"/signout",
+		{ preHandler: adminAuthMiddleware },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const { isAdmin } = request.query as { isAdmin?: string };
+
+			const cookieOptions: CookieSerializeOptions | undefined = {
 				path: "/",
 				httpOnly: true,
 				secure: process.env.NODE_ENV === "production",
 				sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-			});
+			};
+
+			if (isAdmin === "true") {
+				reply
+					.clearCookie("adminAuthToken", cookieOptions)
+					.clearCookie("adminRefreshToken", cookieOptions);
+			} else {
+				reply
+					.clearCookie("studentAuthToken", cookieOptions)
+					.clearCookie("studentRefreshToken", cookieOptions);
+			}
 
 			return reply.success(null, "Logged out successfully");
 		},

@@ -1,4 +1,4 @@
-import { Loader, PlusCircle, Building2 } from "lucide-react";
+import { Loader, PlusCircle, Building2, ArrowRight } from "lucide-react";
 import { Link, useLoaderData, useSearchParams, useNavigation } from "react-router";
 import { createApiClient } from "~/api/client";
 import { createSocietiesApi } from "~/api/societies.api";
@@ -100,8 +100,9 @@ export default function AdminSocietiesPage() {
 
 							<div className="mt-6">
 								<Link to={`/societies/${society.id}`} prefetch="intent">
-									<Button variant="outline" className="w-full">
+									<Button variant="outline" className="w-full group">
 										Manage Society
+										<ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
 									</Button>
 								</Link>
 							</div>

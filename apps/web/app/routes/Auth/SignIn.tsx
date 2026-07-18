@@ -10,10 +10,9 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { useState } from "react";
 import { createAuthApi } from "~/api/auth.api";
-import type { ErrorResponse } from "~/types/response";
 
 export const meta = () => {
-	return [{ title: "Sign In | Admin" }];
+	return [{ title: "Sign In | Student Portal" }];
 };
 
 const signInSchema = z.object({
@@ -57,9 +56,7 @@ export default function SignIn() {
 				toast.success("Signed in successfully");
 				navigate("/");
 			} else {
-				toast.error(
-					(result as ErrorResponse).error?.message || "Failed to sign in. Please try again later.",
-				);
+				toast.error(result.error?.message || "Failed to sign in. Please try again later.");
 			}
 		} catch (error) {
 			toast.error("Something went wrong. Please try again.");
@@ -76,7 +73,7 @@ export default function SignIn() {
 						<LogIn className="w-6 h-6 text-primary" />
 					</div>
 					<CardTitle className="text-2xl font-semibold tracking-tight">Sign In</CardTitle>
-					<CardDescription>Enter your credentials to access the admin panel</CardDescription>
+					<CardDescription>Enter your credentials to access the student panel</CardDescription>
 				</CardHeader>
 
 				<CardContent>
@@ -89,7 +86,7 @@ export default function SignIn() {
 									<FormItem>
 										<FormLabel>Email Address</FormLabel>
 										<FormControl>
-											<Input type="email" placeholder="admin@gmail.com" {...field} />
+											<Input type="email" placeholder="ixxxxxx@gmail.com" {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>

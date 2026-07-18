@@ -1,13 +1,13 @@
 import { societyMembers, users } from "@uni-events-hq/db";
 import { and, count, desc, ilike, or, ne, eq, notExists } from "drizzle-orm";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { authMiddleware, requireRole } from "~/middlewares/auth.middleware";
+import { adminAuthMiddleware, requireRole } from "~/middlewares/auth.middleware";
 import { ApiError } from "~/utils/ApiError";
 
 export async function studentsRoutes(fastify: FastifyInstance) {
 	fastify.get(
 		"/admin",
-		{ preHandler: [authMiddleware, requireRole(["admin"])] },
+		{ preHandler: [adminAuthMiddleware, requireRole(["admin"])] },
 		async (request: FastifyRequest, reply: FastifyReply) => {
 			const {
 				pageIndex = "0",
@@ -87,7 +87,7 @@ export async function studentsRoutes(fastify: FastifyInstance) {
 					},
 				},
 			},
-			preHandler: [authMiddleware, requireRole(["admin"])],
+			preHandler: [adminAuthMiddleware, requireRole(["admin"])],
 		},
 		async (request: FastifyRequest, reply: FastifyReply) => {
 			const { studentId } = request.params as { studentId: string };
@@ -117,7 +117,7 @@ export async function studentsRoutes(fastify: FastifyInstance) {
 	fastify.get(
 		"/admin/:id/available-students",
 		{
-			preHandler: [authMiddleware, requireRole(["admin"])],
+			preHandler: [adminAuthMiddleware, requireRole(["admin"])],
 		},
 		async (request: FastifyRequest, reply: FastifyReply) => {
 			const {

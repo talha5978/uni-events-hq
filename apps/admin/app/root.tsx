@@ -32,7 +32,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 		return data(
 			{
 				user,
-				isAuthenticated: true,
+				isAuthenticated: user.success || false,
 			},
 			{
 				headers: {

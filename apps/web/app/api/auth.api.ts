@@ -11,22 +11,22 @@ export function createAuthApi(client = createApiClient()) {
 				ApiResponse<{
 					user: UserPayload;
 				}>
-			>("/auth/admin/me");
+			>("/auth/student/me");
 		},
 
-		async signIn(data: any) {
+		async signIn(data: { email: string; password: string }) {
 			return await client.request<
 				ApiResponse<{
 					user: UserPayload;
 				}>
-			>("/auth/admin/signin", {
+			>("/auth/student/signin", {
 				method: "POST",
 				body: JSON.stringify(data),
 			});
 		},
 
 		async logout() {
-			return await client.request("/auth/signout?isAdmin=true", {
+			return await client.request("/auth/signout?isAdmin=false", {
 				method: "POST",
 				body: JSON.stringify({}),
 			});

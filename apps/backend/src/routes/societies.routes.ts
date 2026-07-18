@@ -1,14 +1,14 @@
 import { events, societies, societyBankAccounts, societyMembers, users } from "@uni-events-hq/db";
 import { and, count, desc, eq, sql } from "drizzle-orm";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { authMiddleware, requireRole } from "~/middlewares/auth.middleware";
+import { adminAuthMiddleware, requireRole } from "~/middlewares/auth.middleware";
 import { ApiError } from "~/utils/ApiError";
 
 export async function societiesRoutes(fastify: FastifyInstance) {
 	fastify.post(
 		"/create",
 		{
-			preHandler: [authMiddleware, requireRole(["admin"])],
+			preHandler: [adminAuthMiddleware, requireRole(["admin"])],
 			schema: {
 				body: {
 					type: "object",
@@ -68,7 +68,7 @@ export async function societiesRoutes(fastify: FastifyInstance) {
 
 	fastify.get(
 		"/admin/list",
-		{ preHandler: [authMiddleware, requireRole(["admin"])] },
+		{ preHandler: [adminAuthMiddleware, requireRole(["admin"])] },
 		async (request: FastifyRequest, reply: FastifyReply) => {
 			const { pageSize = "12" } = request.query as { pageSize?: string };
 
@@ -109,7 +109,7 @@ export async function societiesRoutes(fastify: FastifyInstance) {
 		"/admin/:id",
 		{
 			schema: { params: { type: "object", required: ["id"], properties: { id: { type: "string" } } } },
-			preHandler: [authMiddleware, requireRole(["admin"])],
+			preHandler: [adminAuthMiddleware, requireRole(["admin"])],
 		},
 		async (request, reply) => {
 			const { id } = request.params as { id: string };
@@ -189,7 +189,7 @@ export async function societiesRoutes(fastify: FastifyInstance) {
 	fastify.post(
 		"/:societyId/members",
 		{
-			preHandler: [authMiddleware, requireRole(["admin"])],
+			preHandler: [adminAuthMiddleware, requireRole(["admin"])],
 		},
 		async (request: FastifyRequest, reply: FastifyReply) => {
 			const { societyId } = request.params as { societyId: string };
@@ -237,7 +237,7 @@ export async function societiesRoutes(fastify: FastifyInstance) {
 		"/:id/edit",
 		{
 			schema: { params: { type: "object", properties: { id: { type: "string" } } } },
-			preHandler: [authMiddleware, requireRole(["admin"])],
+			preHandler: [adminAuthMiddleware, requireRole(["admin"])],
 		},
 		async (request: FastifyRequest, reply: FastifyReply) => {
 			const { id } = request.params as { id: string };
@@ -259,7 +259,7 @@ export async function societiesRoutes(fastify: FastifyInstance) {
 		"/:id/edit",
 		{
 			schema: { params: { type: "object", properties: { id: { type: "string" } } } },
-			preHandler: [authMiddleware, requireRole(["admin"])],
+			preHandler: [adminAuthMiddleware, requireRole(["admin"])],
 		},
 		async (request: FastifyRequest, reply: FastifyReply) => {
 			const { id } = request.params as { id: string };
