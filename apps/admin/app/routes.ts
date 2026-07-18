@@ -10,6 +10,7 @@ export default [
 		...prefix("societies", [
 			index("./routes/Societies/index.tsx"),
 			route("create", "./routes/Societies/create-society.tsx"),
+			route(":id", "./routes/Societies/society.tsx"),
 		]),
 	]),
 ] satisfies RouteConfig;

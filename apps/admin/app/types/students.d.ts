@@ -23,3 +23,21 @@ export type StudentListResponse = {
 		pageCount: number;
 	};
 };
+
+export type StudentsListMin = {
+	students: {
+		id: string;
+		fullName: string;
+		email: string;
+		studentId: string | null;
+		department: string | null;
+		batch: string | null;
+	}[];
+	pagination: {
+		page: number;
+		pageSize: number;
+		total: number;
+		pageCount: number;
+		hasMore: boolean;
+	};
+};

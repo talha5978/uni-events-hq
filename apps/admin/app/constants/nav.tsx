@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, UserPlus, Building2, Calendar, Clock, FileText } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Calendar, Clock, FileText } from "lucide-react";
 import type { NavItem } from "~/types/nav";
 
 export const navLinks: NavItem[] = [
@@ -16,11 +16,6 @@ export const navLinks: NavItem[] = [
 		title: "Societies",
 		url: "/societies",
 		icon: <Building2 size={18} />,
-	},
-	{
-		title: "Society Members",
-		url: "/society-members",
-		icon: <UserPlus size={18} />,
 	},
 	{
 		title: "Events",

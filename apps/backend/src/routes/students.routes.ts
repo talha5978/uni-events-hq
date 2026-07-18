@@ -1,5 +1,5 @@
-import { users } from "@uni-events-hq/db";
-import { and, count, desc, ilike, or, ne, eq } from "drizzle-orm";
+import { societyMembers, users } from "@uni-events-hq/db";
+import { and, count, desc, ilike, or, ne, eq, notExists } from "drizzle-orm";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { authMiddleware, requireRole } from "~/middlewares/auth.middleware";
 import { ApiError } from "~/utils/ApiError";
@@ -110,6 +110,87 @@ export async function studentsRoutes(fastify: FastifyInstance) {
 			return reply.success(
 				null,
 				`Student ${student.isVerified ? "unverified" : "verified"} successfully`,
+			);
+		},
+	);
+
+	fastify.get(
+		"/admin/:id/available-students",
+		{
+			preHandler: [authMiddleware, requireRole(["admin"])],
+		},
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const {
+				pageIndex = "0",
+				pageSize = "15",
+				search = "",
+			} = request.query as {
+				pageIndex?: string;
+				pageSize?: string;
+				search?: string;
+			};
+
+			const page = parseInt(pageIndex);
+			const limit = parseInt(pageSize);
+			const offset = page * limit;
+			const searchTerm = search.trim().toLowerCase();
+
+			let whereConditions = and(
+				eq(users.role, "student"),
+				eq(users.isVerified, true),
+				notExists(
+					fastify.db.select().from(societyMembers).where(eq(societyMembers.userId, users.id)),
+				),
+			);
+
+			// Apply search if provided
+			if (searchTerm) {
+				whereConditions = and(
+					whereConditions,
+					or(
+						ilike(users.fullName, `%${searchTerm}%`),
+						ilike(users.email, `%${searchTerm}%`),
+						ilike(users.studentId, `%${searchTerm}%`),
+					),
+				) as any;
+			}
+
+			// Main Query
+			const availableStudents = await fastify.db
+				.select({
+					id: users.id,
+					fullName: users.fullName,
+					email: users.email,
+					studentId: users.studentId,
+					department: users.department,
+					batch: users.batch,
+				})
+				.from(users)
+				.where(whereConditions)
+				.orderBy(users.fullName)
+				.limit(limit)
+				.offset(offset);
+
+			// Total count for pagination
+			const totalResult = await fastify.db
+				.select({ count: count() })
+				.from(users)
+				.where(whereConditions);
+
+			const total = Number(totalResult[0]?.count || 0);
+
+			return reply.success(
+				{
+					students: availableStudents,
+					pagination: {
+						page: page + 1,
+						pageSize: limit,
+						total,
+						pageCount: Math.ceil(total / limit),
+						hasMore: total > (page + 1) * limit,
+					},
+				},
+				"Available students retrieved successfully",
 			);
 		},
 	);

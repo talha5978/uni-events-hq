@@ -19,6 +19,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	return data;
 };
 
+export const meta = () => {
+	return [
+		{
+			title: "Societies | Admin Portal",
+		},
+		{
+			name: "description",
+			content: "Manage all societies - Verify, Revoke & Monitor",
+		},
+	];
+};
+
 export default function AdminSocietiesPage() {
 	const loaderData = useLoaderData<typeof loader>();
 	const [searchParams, setSearchParams] = useSearchParams();
