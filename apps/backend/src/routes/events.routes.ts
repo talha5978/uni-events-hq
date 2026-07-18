@@ -1,5 +1,5 @@
 import { events, societyMembers } from "@uni-events-hq/db";
-import { and, desc, eq, or } from "drizzle-orm";
+import { and, count, desc, eq, gt, gte, lte, or, sql } from "drizzle-orm";
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { requireRole, studentAuthMiddleware } from "~/middlewares/auth.middleware";
 import { ApiError } from "~/utils/ApiError";
@@ -117,6 +117,68 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 				.orderBy(desc(events.eventDate));
 
 			return reply.success({ events: eventsList }, "Society events retrieved successfully");
+		},
+	);
+
+	fastify.get(
+		"/",
+		{
+			schema: {
+				querystring: {
+					type: "object",
+					properties: {
+						pageSize: { type: "string" },
+						status: { type: "string", enum: ["all", "upcoming", "ongoing"] },
+					},
+				},
+			},
+		},
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const { pageSize = "12", status = "all" } = request.query as {
+				pageSize?: string;
+				status?: "all" | "active";
+			};
+
+			const limit = parseInt(pageSize);
+
+			let whereCondition = undefined;
+
+			if (status === "active") {
+				whereCondition = or(
+					gt(events.eventDate, new Date()),
+					and(
+						lte(events.eventDate, new Date()),
+						gte(events.eventDate, sql`NOW() - INTERVAL '14 days'`),
+					),
+				);
+			}
+
+			const eventsList = await fastify.db
+				.select()
+				.from(events)
+				.where(whereCondition)
+				.orderBy(desc(events.eventDate))
+				.limit(limit);
+
+			const totalResult = await fastify.db
+				.select({ count: count() })
+				.from(events)
+				.where(whereCondition);
+
+			const total = Number(totalResult[0]?.count || 0);
+
+			return reply.success(
+				{
+					events: eventsList,
+					pagination: {
+						pageSize: limit,
+						total,
+						hasMore: total > limit,
+					},
+					filters: { status },
+				},
+				"Events retrieved successfully",
+			);
 		},
 	);
 }
