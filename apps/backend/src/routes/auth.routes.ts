@@ -1,6 +1,6 @@
 import { users, societyMembers, type UserRole } from "@uni-events-hq/db";
 import { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 import { comparePassword, hashPassword, jwtService } from "@uni-events-hq/auth";
 import { ApiError } from "~/utils/ApiError";
 import { adminAuthMiddleware, studentAuthMiddleware } from "~/middlewares/auth.middleware";
@@ -337,11 +337,11 @@ export async function authRoutes(fastify: FastifyInstance) {
 			const existingUser = await fastify.db
 				.select()
 				.from(users)
-				.where(and(eq(users.email, body.email), eq(users.studentId, body.studentId)))
+				.where(or(eq(users.email, body.email), eq(users.studentId, body.studentId)))
 				.limit(1);
 
 			if (existingUser.length > 0) {
-				throw new ApiError("User with this email already exists", 409, "EMAIL_EXISTS");
+				throw new ApiError("Student already exists", 409, "EMAIL_EXISTS");
 			}
 
 			const hashedPassword = await hashPassword(body.password);
