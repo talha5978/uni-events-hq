@@ -287,9 +287,7 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 				transactionProofUrl?: string;
 			};
 
-			// Start transaction
 			const result = await fastify.db.transaction(async (tx) => {
-				// 1. Check if already registered
 				const existingRegistration = await tx.query.eventRegistrations.findFirst({
 					where: and(
 						eq(eventRegistrations.eventId, eventId),
@@ -305,7 +303,6 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 					);
 				}
 
-				// 2. Get event details
 				const event = await tx.query.events.findFirst({
 					where: eq(events.id, eventId),
 				});
@@ -314,7 +311,22 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 					throw new ApiError("Event not found", 404, "EVENT_NOT_FOUND");
 				}
 
-				// 3. Create registration
+				const user = await tx.query.users.findFirst({
+					where: eq(users.id, userId),
+				});
+
+				if (!user) {
+					throw new ApiError("User not found", 404, "USER_NOT_FOUND");
+				}
+
+				if (event.isMembersOnly && user.role === "student") {
+					throw new ApiError(
+						"This event is restricted to society members only.",
+						403,
+						"MEMBERS_ONLY_EVENT",
+					);
+				}
+
 				const [newRegistration] = await tx
 					.insert(eventRegistrations)
 					.values({
@@ -326,7 +338,6 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 					})
 					.returning();
 
-				// 4. Create QR Code entry
 				await tx.insert(qrCodes).values({
 					eventRegistrationId: newRegistration.id,
 					userId,
