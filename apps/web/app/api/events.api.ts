@@ -81,8 +81,6 @@ export function createEventsApi(client = createApiClient()) {
 				eventDate?: string;
 				location?: string;
 				isMembersOnly?: boolean;
-				isPaid?: boolean;
-				ticketPrice?: number | null;
 				maxParticipants?: number | null;
 				rules?: string[];
 				hasMultipleSlots?: boolean;
@@ -95,6 +93,34 @@ export function createEventsApi(client = createApiClient()) {
 				method: "PUT",
 				body: JSON.stringify(body),
 			});
+		},
+
+		async registerEvent(
+			eventId: string,
+			body: {
+				selectedTimeslot: Timeslot | null;
+				transactionProofUrl: string | null;
+			},
+		) {
+			return await client.request<
+				ApiResponse<{
+					registrationId: string;
+					qrCodeToken: string;
+				}>
+			>(`/events/${eventId}/register`, {
+				method: "POST",
+				body: JSON.stringify(body),
+			});
+		},
+
+		async getRegistration(regId: string) {
+			return await client.request<
+				ApiResponse<{
+					registration: any;
+					event: any;
+					qrCodeId: string;
+				}>
+			>(`/events/registrations/${regId}`, { method: "GET" });
 		},
 	};
 }

@@ -17,5 +17,9 @@ export default [
 		route("society-members", "./routes/Societies/society-members.tsx"),
 
 		route("events", "./routes/Events/events.tsx"),
+		route("register-event/:id", "./routes/Events/register-event.tsx"),
+		route("registration-success", "./routes/Events/registration-success.tsx"),
 	]),
+
+	route("verify-recaptcha", "./routes/verify-recaptcha.ts"),
 ] satisfies RouteConfig;

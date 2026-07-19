@@ -1,5 +1,5 @@
-import { events, societyMembers } from "@uni-events-hq/db";
-import { and, count, desc, eq, gt, gte, lte, or, sql } from "drizzle-orm";
+import { eventRegistrations, events, qrCodes, societyMembers, users } from "@uni-events-hq/db";
+import { and, count, desc, eq, getTableColumns, gt, gte, lte, or, sql } from "drizzle-orm";
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { requireRole, studentAuthMiddleware } from "~/middlewares/auth.middleware";
 import { ApiError } from "~/utils/ApiError";
@@ -128,7 +128,7 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 					type: "object",
 					properties: {
 						pageSize: { type: "string" },
-						status: { type: "string", enum: ["all", "upcoming", "ongoing"] },
+						status: { type: "string", enum: ["all", "active"] },
 					},
 				},
 			},
@@ -184,7 +184,7 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 
 	fastify.get(
 		"/:id",
-		{ preHandler: [studentAuthMiddleware, requireRole(["president"])] },
+		{ preHandler: [studentAuthMiddleware] },
 		async (request: FastifyRequest, reply: FastifyReply) => {
 			const { id } = request.params as { id: string };
 			const societyId = request.user?.societyId;
@@ -227,8 +227,6 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 				eventDate,
 				location,
 				isMembersOnly,
-				isPaid,
-				ticketPrice,
 				maxParticipants,
 				rules,
 				hasMultipleSlots,
@@ -258,8 +256,6 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 					eventDate: eventDate ? new Date(eventDate) : undefined,
 					location: location?.trim(),
 					isMembersOnly: isMembersOnly,
-					isPaid: isPaid,
-					ticketPrice: isPaid ? ticketPrice : null,
 					maxParticipants: maxParticipants,
 					rules: rules?.length > 0 ? rules : null,
 					hasMultipleSlots: hasMultipleSlots,
@@ -272,6 +268,131 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 				.returning();
 
 			return reply.success({ event: updatedEvent }, title + " event updated successfully");
+		},
+	);
+
+	fastify.post(
+		"/:eventId/register",
+		{ preHandler: [studentAuthMiddleware] },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const { eventId } = request.params as { eventId: string };
+			const userId = request.user?.id;
+
+			if (!userId) {
+				throw new ApiError("User ID not found in user session", 400, "NO_USER_ID");
+			}
+
+			const { selectedTimeslot, transactionProofUrl } = request.body as {
+				selectedTimeslot?: any;
+				transactionProofUrl?: string;
+			};
+
+			// Start transaction
+			const result = await fastify.db.transaction(async (tx) => {
+				// 1. Check if already registered
+				const existingRegistration = await tx.query.eventRegistrations.findFirst({
+					where: and(
+						eq(eventRegistrations.eventId, eventId),
+						eq(eventRegistrations.userId, userId),
+					),
+				});
+
+				if (existingRegistration) {
+					throw new ApiError(
+						"You are already registered for this event",
+						409,
+						"ALREADY_REGISTERED",
+					);
+				}
+
+				// 2. Get event details
+				const event = await tx.query.events.findFirst({
+					where: eq(events.id, eventId),
+				});
+
+				if (!event) {
+					throw new ApiError("Event not found", 404, "EVENT_NOT_FOUND");
+				}
+
+				// 3. Create registration
+				const [newRegistration] = await tx
+					.insert(eventRegistrations)
+					.values({
+						eventId,
+						userId,
+						selectedTimeslot: selectedTimeslot || null,
+						transactionProofUrl: transactionProofUrl || null,
+						status: event.isPaid ? "pending_verification" : "registered",
+					})
+					.returning();
+
+				// 4. Create QR Code entry
+				await tx.insert(qrCodes).values({
+					eventRegistrationId: newRegistration.id,
+					userId,
+				});
+
+				return { newRegistration, event };
+			});
+
+			return reply.success(
+				{
+					registrationId: result.newRegistration.id,
+				},
+				result.event.isPaid
+					? "Registration submitted! Waiting for payment verification."
+					: "Registration successful!",
+				201,
+			);
+		},
+	);
+
+	fastify.get(
+		"/registrations/:regId",
+		{ preHandler: [studentAuthMiddleware] },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const { regId } = request.params as { regId: string };
+			const userId = request.user?.id;
+
+			const {
+				transactionProofUrl,
+				paymentVerifiedAt,
+				paymentVerifiedBy,
+				scannedAt,
+				...safeRegistrationColumns
+			} = getTableColumns(eventRegistrations);
+
+			const [registration] = await fastify.db
+				.select({
+					...safeRegistrationColumns,
+					event: events,
+					user: users,
+				})
+				.from(eventRegistrations)
+				.innerJoin(events, eq(eventRegistrations.eventId, events.id))
+				.innerJoin(users, eq(eventRegistrations.userId, users.id))
+				.where(eq(eventRegistrations.id, regId))
+				.limit(1);
+
+			if (!registration) {
+				throw new ApiError("Registration not found", 404, "REGISTRATION_NOT_FOUND");
+			}
+
+			if (registration.userId !== userId) {
+				throw new ApiError("You don't have access to this registration", 403, "FORBIDDEN");
+			}
+
+			const qrCode = await fastify.db
+				.select({ id: qrCodes.id })
+				.from(qrCodes)
+				.where(eq(qrCodes.eventRegistrationId, regId))
+				.limit(1);
+
+			return reply.success({
+				registration,
+				event: registration.event,
+				qrCodeId: qrCode[0]?.id,
+			});
 		},
 	);
 }

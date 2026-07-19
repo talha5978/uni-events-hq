@@ -358,7 +358,9 @@ export default function UpdateEventPage() {
 							/>
 
 							{!event?.isPaid && (
-								<div className="p-4 border border-border bg-accent">Free Event</div>
+								<div className="p-4 border border-border bg-accent rounded-md font-semibold">
+									Free Entry
+								</div>
 							)}
 
 							{event?.isPaid && event?.ticketPrice && (

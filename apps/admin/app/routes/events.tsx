@@ -194,11 +194,6 @@ export default function SocietyEventsPage() {
 								</CardContent>
 
 								<CardFooter className="px-4 pt-0 gap-3">
-									<Link to={`/events/${event.id}/manage`} className="flex-1">
-										<Button className="w-full" variant="outline">
-											Manage
-										</Button>
-									</Link>
 									<Link to={`/event-registrations?eventId=${event.id}`} className="flex-1">
 										<Button className="w-full">
 											Registrations

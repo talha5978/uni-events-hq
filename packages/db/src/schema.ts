@@ -235,4 +235,5 @@ export const schema = {
 	events,
 	eventRegistrations,
 	societySubscriptions,
+	qrCodes,
 } as const;
