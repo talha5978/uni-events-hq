@@ -280,7 +280,7 @@ export default function UpdateEventPage() {
 									<img
 										src={bannerPreview}
 										alt="Banner Preview"
-										className="mx-auto max-h-52 rounded-lg mb-4"
+										className="mx-auto max-h-52 aspect-video object-cover rounded-lg mb-4"
 									/>
 								) : (
 									<Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />

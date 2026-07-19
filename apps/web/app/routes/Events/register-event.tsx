@@ -43,6 +43,10 @@ function formatPrice(price: number) {
 	}).format(price);
 }
 
+export const meta = () => {
+	return [{ title: "Register Event | Student Portal" }];
+};
+
 export default function EventRegistrationPage() {
 	const { id: eventId } = useParams();
 	const loaderData = useLoaderData<typeof loader>();
@@ -131,7 +135,9 @@ export default function EventRegistrationPage() {
 	if (!event) return <div>Event not found</div>;
 
 	return (
-		<RoleGuard allowedRoles={event.isMembersOnly ? ["member"] : ["treasurer", "member", "student"]}>
+		<RoleGuard
+			allowedRoles={event.isMembersOnly ? ["member", "treasurer"] : ["treasurer", "member", "student"]}
+		>
 			<div className="max-w-7xl mx-auto p-6">
 				<div className="mb-8">
 					<h1 className="text-3xl font-bold">{event.title}</h1>

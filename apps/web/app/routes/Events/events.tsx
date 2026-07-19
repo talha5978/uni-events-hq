@@ -1,13 +1,15 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { createApiClient } from "~/api/client";
 import { createEventsApi } from "~/api/events.api";
-import { useLoaderData, Link } from "react-router";
+import { useLoaderData, Link, useRouteLoaderData } from "react-router";
 import { Calendar, MapPin, Users, Ticket, Clock, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardFooter } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { format } from "date-fns";
 import { RoleGuard } from "~/components/Auth/RoleGaurd";
+import type { ErrorResponse, SuccessResponse } from "~/types/response";
+import type { UserPayload } from "@uni-events-hq/auth";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const cookieHeader = request.headers.get("Cookie") ?? "";
@@ -64,9 +66,27 @@ const getStatusConfig = (status: string) => {
 	}
 };
 
+type RootLoaderData = {
+	user?:
+		| ErrorResponse
+		| SuccessResponse<{
+				user: UserPayload;
+		  }>;
+};
+
 export default function EventsPage() {
 	const loaderData = useLoaderData<typeof loader>();
-	const events = loaderData.success ? loaderData.data.events : [];
+	const allEvents = loaderData.success ? loaderData.data.events : [];
+
+	const rootData = useRouteLoaderData("root") as RootLoaderData | undefined;
+	const userRole = rootData?.user?.success ? rootData.user.data.user.role : "student";
+
+	const events = allEvents.filter((event) => {
+		if (event.isMembersOnly && userRole === "student") {
+			return false;
+		}
+		return true;
+	});
 
 	return (
 		<RoleGuard allowedRoles={["treasurer", "student", "member"]}>
@@ -108,7 +128,7 @@ export default function EventsPage() {
 											</div>
 										)}
 
-										{/* Overlay Gradient for readability if needed, though we moved text down */}
+										{/* Overlay Gradient */}
 										<div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
 										{/* Floating Status Badge */}
@@ -121,7 +141,7 @@ export default function EventsPage() {
 											</Badge>
 										</div>
 
-										{/* Cancel Request Warning (if applicable) */}
+										{/* Cancel Request Warning */}
 										{event.status === "cancel_requested" && (
 											<div className="absolute top-3 left-3">
 												<Badge
@@ -134,13 +154,12 @@ export default function EventsPage() {
 										)}
 									</div>
 
-									{/* Main Content - flex-grow ensures the footer stays at the bottom */}
+									{/* Main Content */}
 									<CardContent className="px-4 py-2 grow flex flex-col">
 										<h3 className="font-semibold text-xl line-clamp-2 leading-tight group-hover:text-primary transition-colors mb-4">
 											{event.title}
 										</h3>
-
-										{/* Event Metadata (Icon list) */}
+										{/* Event Metadata */}
 										<div className="space-y-2.5 mb-4">
 											<div className="flex items-start gap-2.5 text-sm text-muted-foreground">
 												<Clock className="w-4 h-4 mt-0.5 shrink-0 text-primary/70" />
@@ -176,7 +195,7 @@ export default function EventsPage() {
 											{event.description}
 										</p>
 
-										{/* Tags Row - Pushed to the bottom of the content area */}
+										{/* Tags Row */}
 										<div className="flex flex-wrap gap-2 mt-auto pt-2">
 											{event.isMembersOnly && (
 												<Badge variant="secondary" className="text-xs font-normal">
@@ -198,7 +217,7 @@ export default function EventsPage() {
 									<CardFooter className="px-4 pt-0 gap-3">
 										<Link to={`/register-event/${event.id}`} className="flex-1">
 											<Button className="w-full">
-												<Calendar className="w-4 h-4" />
+												<Calendar className="w-4 h-4 mr-2" />
 												Register
 											</Button>
 										</Link>
