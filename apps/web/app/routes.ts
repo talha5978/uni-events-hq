@@ -12,6 +12,7 @@ export default [
 
 		route("society-events", "./routes/Events/society-events.tsx"),
 		route("society-events/create", "./routes/Events/create-event.tsx"),
+		route("society-events/:id/manage", "./routes/Events/update-event.tsx"),
 
 		route("society-members", "./routes/Societies/society-members.tsx"),
 

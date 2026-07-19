@@ -27,13 +27,6 @@ export const navLinks: NavItem[] = [
 	},
 
 	{
-		title: "Societies",
-		url: "/societies",
-		icon: <Building2 size={18} />,
-		allowedRoles: ["member", "student", "treasurer"],
-	},
-
-	{
 		title: "My Society",
 		url: "/my-society",
 		icon: <Building2 size={18} />,

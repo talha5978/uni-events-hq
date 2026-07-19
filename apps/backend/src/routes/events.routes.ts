@@ -181,4 +181,97 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 			);
 		},
 	);
+
+	fastify.get(
+		"/:id",
+		{ preHandler: [studentAuthMiddleware, requireRole(["president"])] },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const { id } = request.params as { id: string };
+			const societyId = request.user?.societyId;
+
+			if (!societyId) {
+				throw new ApiError("Society ID not found in user session", 400, "NO_SOCIETY_ID");
+			}
+
+			const event = await fastify.db.query.events.findFirst({
+				where: eq(events.id, id),
+			});
+
+			if (!event) {
+				throw new ApiError("Event not found", 404, "EVENT_NOT_FOUND");
+			}
+
+			if (event.societyId !== societyId) {
+				throw new ApiError("You don't have access to this event", 403, "FORBIDDEN");
+			}
+
+			return reply.success({ event }, "Event details retrieved successfully");
+		},
+	);
+
+	fastify.put(
+		"/:id",
+		{ preHandler: [studentAuthMiddleware, requireRole(["president"])] },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const { id } = request.params as { id: string };
+			const userId = request.user?.id;
+			const societyId = request.user?.societyId;
+
+			if (!societyId) {
+				throw new ApiError("Society ID not found in user session", 400, "NO_SOCIETY_ID");
+			}
+
+			const {
+				title,
+				description,
+				eventDate,
+				location,
+				isMembersOnly,
+				isPaid,
+				ticketPrice,
+				maxParticipants,
+				rules,
+				hasMultipleSlots,
+				timeslots,
+				bannerUrl,
+				status,
+			} = request.body as any;
+
+			// Check if event exists and belongs to user's society
+			const existingEvent = await fastify.db.query.events.findFirst({
+				where: eq(events.id, id),
+			});
+
+			if (!existingEvent) {
+				throw new ApiError("Event not found", 404, "EVENT_NOT_FOUND");
+			}
+
+			if (existingEvent.societyId !== societyId || existingEvent.createdBy !== userId) {
+				throw new ApiError("You don't have permission to update this event", 403, "FORBIDDEN");
+			}
+
+			const [updatedEvent] = await fastify.db
+				.update(events)
+				.set({
+					title: title?.trim(),
+					description: description?.trim(),
+					eventDate: eventDate ? new Date(eventDate) : undefined,
+					location: location?.trim(),
+					isMembersOnly: isMembersOnly,
+					isPaid: isPaid,
+					ticketPrice: isPaid ? ticketPrice : null,
+					maxParticipants: maxParticipants,
+					rules: rules?.length > 0 ? rules : null,
+					hasMultipleSlots: hasMultipleSlots,
+					timeslots: hasMultipleSlots ? timeslots : null,
+					bannerUrl: bannerUrl || existingEvent.bannerUrl,
+					updatedAt: new Date(),
+					status,
+				})
+				.where(eq(events.id, id))
+				.returning();
+
+			return reply.success({ event: updatedEvent }, title + " event updated successfully");
+		},
+	);
 }

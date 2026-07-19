@@ -270,23 +270,29 @@ export default function CreateEventPage() {
 										<img
 											src={bannerPreview}
 											alt="Banner Preview"
-											className="mx-auto max-h-52 rounded-lg"
+											className="mx-auto max-h-52 rounded-lg mb-4"
 										/>
 									) : (
-										<Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+										<Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
 									)}
+
 									<Input
 										type="file"
 										accept="image/*"
 										className="hidden"
-										id="banner"
+										id="banner-upload"
 										onChange={handleBannerChange}
 									/>
-									<label htmlFor="banner" className="cursor-pointer">
-										<Button type="button" variant="outline" className="mt-4">
-											Upload Banner Image
+
+									<label htmlFor="banner-upload" className="cursor-pointer">
+										<Button type="button" variant="outline" asChild>
+											<span>Upload Banner Image</span>
 										</Button>
 									</label>
+
+									<p className="text-xs text-muted-foreground mt-3">
+										Recommended: Wide image (1200x400 or larger)
+									</p>
 								</div>
 							</CardContent>
 						</Card>

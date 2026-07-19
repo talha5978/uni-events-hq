@@ -1,6 +1,6 @@
 import type { ApiResponse } from "~/types/response";
 import { createApiClient } from "~/api/client";
-import type { Event } from "@uni-events-hq/db";
+import type { Event, EventStatus, Timeslot } from "@uni-events-hq/db";
 
 export function createEventsApi(client = createApiClient()) {
 	return {
@@ -67,6 +67,34 @@ export function createEventsApi(client = createApiClient()) {
 					filters: { status: string };
 				}>
 			>(url, { method: "GET" });
+		},
+
+		async getEventById(id: string) {
+			return await client.request<ApiResponse<{ event: Event }>>(`/events/${id}`, { method: "GET" });
+		},
+
+		async updateEvent(
+			id: string,
+			body: {
+				title?: string;
+				description?: string;
+				eventDate?: string;
+				location?: string;
+				isMembersOnly?: boolean;
+				isPaid?: boolean;
+				ticketPrice?: number | null;
+				maxParticipants?: number | null;
+				rules?: string[];
+				hasMultipleSlots?: boolean;
+				timeslots?: Timeslot[] | null;
+				bannerUrl?: string | null;
+				status?: EventStatus;
+			},
+		) {
+			return await client.request<ApiResponse<{ event: Event }>>(`/events/${id}`, {
+				method: "PUT",
+				body: JSON.stringify(body),
+			});
 		},
 	};
 }
