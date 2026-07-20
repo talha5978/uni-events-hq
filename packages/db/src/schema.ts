@@ -32,7 +32,6 @@ export const eventStatusEnum = pgEnum("event_status", [
 
 export const registrationStatusEnum = pgEnum("registration_status", [
 	"pending_verification", // After uploading proof
-	"payment_verified",
 	"registered",
 	"attended",
 	"absent",

@@ -201,7 +201,7 @@ export default function AdminStudentsPage() {
 						</Button>
 
 						<Button variant="outline" asChild>
-							<Link to="/dashboard">Go to Dashboard</Link>
+							<Link to="/">Go to Dashboard</Link>
 						</Button>
 					</div>
 				</div>

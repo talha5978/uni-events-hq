@@ -1,5 +1,5 @@
 import { eventRegistrations, events, qrCodes, societyMembers, users } from "@uni-events-hq/db";
-import { and, count, desc, eq, getTableColumns, gt, gte, lte, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, getTableColumns, gt, gte, ilike, lte, or, sql } from "drizzle-orm";
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { requireRole, studentAuthMiddleware } from "~/middlewares/auth.middleware";
 import { ApiError } from "~/utils/ApiError";
@@ -282,9 +282,9 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 				throw new ApiError("User ID not found in user session", 400, "NO_USER_ID");
 			}
 
-			const { selectedTimeslot, transactionProofUrl } = request.body as {
+			const { selectedTimeslot, transactionProof: transactionProofUrl } = request.body as {
 				selectedTimeslot?: any;
-				transactionProofUrl?: string;
+				transactionProof?: string;
 			};
 
 			const result = await fastify.db.transaction(async (tx) => {
@@ -403,6 +403,83 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 				registration,
 				event: registration.event,
 				qrCodeId: qrCode[0]?.id,
+			});
+		},
+	);
+
+	fastify.get(
+		"/finances",
+		{ preHandler: [studentAuthMiddleware, requireRole(["treasurer"])] },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const {
+				eventId,
+				pageIndex = "0",
+				pageSize = "15",
+				search,
+			} = request.query as {
+				eventId?: string;
+				pageIndex?: string;
+				pageSize?: string;
+				search?: string;
+			};
+
+			const page = parseInt(pageIndex);
+			const limit = parseInt(pageSize);
+			const offset = page * limit;
+
+			const registrations = await fastify.db
+				.select({
+					studentId: users.studentId,
+					fullName: users.fullName,
+					email: users.email,
+					department: users.department,
+					batch: users.batch,
+					section: users.section,
+
+					registrationId: eventRegistrations.id,
+					transactionProofUrl: eventRegistrations.transactionProofUrl,
+					status: eventRegistrations.status,
+					registeredAt: eventRegistrations.registeredAt,
+					paymentVerifiedAt: eventRegistrations.paymentVerifiedAt,
+
+					eventTitle: events.title,
+				})
+				.from(eventRegistrations)
+				.leftJoin(users, eq(eventRegistrations.userId, users.id))
+				.leftJoin(events, eq(eventRegistrations.eventId, events.id))
+				.where(
+					or(
+						eventId ? eq(eventRegistrations.eventId, eventId) : undefined,
+						search
+							? or(
+									ilike(events.title, `%${search}%`),
+									ilike(users.fullName, `%${search}%`),
+									ilike(users.email, `%${search}%`),
+									ilike(users.studentId, `%${search}%`),
+								)
+							: undefined,
+					),
+				)
+				.orderBy(desc(eventRegistrations.registeredAt))
+				.limit(limit)
+				.offset(offset);
+
+			const totalResult = await fastify.db
+				.select({ count: count() })
+				.from(eventRegistrations)
+				.leftJoin(events, eq(eventRegistrations.eventId, events.id))
+				.where(eventId ? eq(eventRegistrations.eventId, eventId) : undefined);
+
+			const total = Number(totalResult[0]?.count || 0);
+
+			return reply.success({
+				registrations,
+				pagination: {
+					page: page + 1,
+					pageSize: limit,
+					total,
+					pageCount: Math.ceil(total / limit),
+				},
 			});
 		},
 	);

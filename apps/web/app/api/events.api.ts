@@ -1,6 +1,7 @@
 import type { ApiResponse } from "~/types/response";
 import { createApiClient } from "~/api/client";
 import type { Event, EventStatus, Timeslot } from "@uni-events-hq/db";
+import type { FinancesResp } from "~/types/finances";
 
 export function createEventsApi(client = createApiClient()) {
 	return {
@@ -99,7 +100,7 @@ export function createEventsApi(client = createApiClient()) {
 			eventId: string,
 			body: {
 				selectedTimeslot: Timeslot | null;
-				transactionProofUrl: string | null;
+				transactionProof: string | null;
 			},
 		) {
 			return await client.request<
@@ -121,6 +122,30 @@ export function createEventsApi(client = createApiClient()) {
 					qrCodeId: string;
 				}>
 			>(`/events/registrations/${regId}`, { method: "GET" });
+		},
+
+		async getFinances({
+			eventId,
+			pageIndex,
+			pageSize,
+			search,
+		}: {
+			eventId?: string;
+			pageIndex?: number;
+			pageSize?: number;
+			search?: string;
+		}) {
+			const params = new URLSearchParams();
+
+			if (eventId !== undefined) params.append("eventId", eventId.toString());
+			if (pageIndex !== undefined) params.append("pageIndex", pageIndex.toString());
+			if (pageSize !== undefined) params.append("pageSize", pageSize.toString());
+			if (search !== undefined) params.append("search", search);
+
+			return await client.request<ApiResponse<FinancesResp>>(
+				`/events/finances${params.toString() ? `?${params.toString()}` : ""}`,
+				{ method: "GET" },
+			);
 		},
 	};
 }

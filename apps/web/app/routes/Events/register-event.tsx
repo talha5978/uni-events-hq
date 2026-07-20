@@ -209,10 +209,12 @@ export default function EventRegistrationPage() {
 										{/* Payment Proof (if paid) */}
 										{event.isPaid && event.ticketPrice ? (
 											<div>
-												<Label>Event Fee</Label>
-												<span className="text-muted-foreground ml-2">
-													{formatPrice(Number(event.ticketPrice))}
-												</span>
+												<div className="mb-4 space-y-1">
+													<Label>Event Fee</Label>
+													<span className="text-muted-foreground">
+														{formatPrice(Number(event.ticketPrice))}
+													</span>
+												</div>
 
 												<FormLabel>Payment Proof</FormLabel>
 												<div className="border-2 border-dashed rounded-xl p-6 text-center mt-2">
@@ -232,15 +234,11 @@ export default function EventRegistrationPage() {
 														id="proof"
 														onChange={handleProofUpload}
 													/>
-													<label htmlFor="proof" className="cursor-pointer">
-														<Button
-															type="button"
-															variant="outline"
-															className="mt-3"
-														>
+													<Button type="button" variant="outline" className="mt-3">
+														<label htmlFor="proof" className="cursor-pointer">
 															Upload Transaction Screenshot
-														</Button>
-													</label>
+														</label>
+													</Button>
 												</div>
 											</div>
 										) : (

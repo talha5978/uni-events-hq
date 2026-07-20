@@ -44,6 +44,6 @@ export const navLinks: NavItem[] = [
 		title: "Finances",
 		url: "/finances",
 		icon: <Settings size={18} />,
-		allowedRoles: ["president", "treasurer"],
+		allowedRoles: ["treasurer"],
 	},
 ];
