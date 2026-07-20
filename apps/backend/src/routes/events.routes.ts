@@ -194,11 +194,6 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 		{ preHandler: [studentAuthMiddleware] },
 		async (request: FastifyRequest, reply: FastifyReply) => {
 			const { id } = request.params as { id: string };
-			const societyId = request.user?.societyId;
-
-			if (!societyId) {
-				throw new ApiError("Society ID not found in user session", 400, "NO_SOCIETY_ID");
-			}
 
 			const event = await fastify.db.query.events.findFirst({
 				where: eq(events.id, id),
@@ -206,10 +201,6 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 
 			if (!event) {
 				throw new ApiError("Event not found", 404, "EVENT_NOT_FOUND");
-			}
-
-			if (event.societyId !== societyId) {
-				throw new ApiError("You don't have access to this event", 403, "FORBIDDEN");
 			}
 
 			return reply.success({ event }, "Event details retrieved successfully");
@@ -295,6 +286,7 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 			};
 
 			const result = await fastify.db.transaction(async (tx) => {
+				// 1. Check if already registered
 				const existingRegistration = await tx.query.eventRegistrations.findFirst({
 					where: and(
 						eq(eventRegistrations.eventId, eventId),
@@ -310,6 +302,7 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 					);
 				}
 
+				// 2. Get event details
 				const event = await tx.query.events.findFirst({
 					where: eq(events.id, eventId),
 				});
@@ -318,22 +311,23 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 					throw new ApiError("Event not found", 404, "EVENT_NOT_FOUND");
 				}
 
-				const user = await tx.query.users.findFirst({
-					where: eq(users.id, userId),
-				});
+				// 3. Check maxParticipants if set
+				if (event.maxParticipants) {
+					const currentCount = await tx
+						.select({ count: count() })
+						.from(eventRegistrations)
+						.where(eq(eventRegistrations.eventId, eventId));
 
-				if (!user) {
-					throw new ApiError("User not found", 404, "USER_NOT_FOUND");
+					if (currentCount[0].count >= event.maxParticipants) {
+						throw new ApiError(
+							"Event has reached maximum participants! Better luck next time...",
+							400,
+							"MAX_PARTICIPANTS_REACHED",
+						);
+					}
 				}
 
-				if (event.isMembersOnly && user.role === "student") {
-					throw new ApiError(
-						"This event is restricted to society members only.",
-						403,
-						"MEMBERS_ONLY_EVENT",
-					);
-				}
-
+				// 4. Create registration
 				const [newRegistration] = await tx
 					.insert(eventRegistrations)
 					.values({
@@ -345,6 +339,7 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 					})
 					.returning();
 
+				// 5. Create QR Code
 				await tx.insert(qrCodes).values({
 					eventRegistrationId: newRegistration.id,
 					userId,
