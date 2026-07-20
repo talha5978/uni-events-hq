@@ -1,4 +1,11 @@
-import { eventRegistrations, events, qrCodes, societyMembers, users } from "@uni-events-hq/db";
+import {
+	eventRegistrations,
+	events,
+	qrCodes,
+	societyMembers,
+	users,
+	type RegistrationStatus,
+} from "@uni-events-hq/db";
 import { and, count, desc, eq, getTableColumns, gt, gte, ilike, lte, or, sql } from "drizzle-orm";
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { requireRole, studentAuthMiddleware } from "~/middlewares/auth.middleware";
@@ -404,6 +411,39 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 				event: registration.event,
 				qrCodeId: qrCode[0]?.id,
 			});
+		},
+	);
+
+	fastify.patch(
+		"/registrations/:registrationId/status",
+		{ preHandler: [studentAuthMiddleware, requireRole(["treasurer"])] },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const { registrationId } = request.params as { registrationId: string };
+			const { status } = request.body as { status: RegistrationStatus };
+
+			const validStatuses: RegistrationStatus[] = ["registered", "attended", "absent", "cancelled"];
+
+			if (!validStatuses.includes(status)) {
+				throw new ApiError("Invalid status", 400, "INVALID_STATUS");
+			}
+
+			const [updatedRegistration] = await fastify.db
+				.update(eventRegistrations)
+				.set({
+					status,
+					paymentVerifiedAt: status === "registered" ? new Date() : undefined,
+				})
+				.where(eq(eventRegistrations.id, registrationId))
+				.returning();
+
+			if (!updatedRegistration) {
+				throw new ApiError("Registration not found", 404, "REGISTRATION_NOT_FOUND");
+			}
+
+			return reply.success(
+				{ registration: updatedRegistration },
+				`Registration status updated to ${status}`,
+			);
 		},
 	);
 

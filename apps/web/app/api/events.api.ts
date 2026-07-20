@@ -1,6 +1,6 @@
 import type { ApiResponse } from "~/types/response";
 import { createApiClient } from "~/api/client";
-import type { Event, EventStatus, Timeslot } from "@uni-events-hq/db";
+import type { Event, EventStatus, RegistrationStatus, Timeslot } from "@uni-events-hq/db";
 import type { FinancesResp } from "~/types/finances";
 
 export function createEventsApi(client = createApiClient()) {
@@ -146,6 +146,13 @@ export function createEventsApi(client = createApiClient()) {
 				`/events/finances${params.toString() ? `?${params.toString()}` : ""}`,
 				{ method: "GET" },
 			);
+		},
+
+		async updateRegistrationStatus(registrationId: string, status: RegistrationStatus) {
+			return await client.request<ApiResponse<null>>(`/events/registrations/${registrationId}/status`, {
+				method: "PATCH",
+				body: JSON.stringify({ status }),
+			});
 		},
 	};
 }

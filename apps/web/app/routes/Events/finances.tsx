@@ -1,5 +1,5 @@
 import { getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Eye, Check, X, Search, AlertTriangle, RefreshCw } from "lucide-react";
+import { Eye, Check, X, Search, AlertTriangle, RefreshCw, Pencil } from "lucide-react";
 import { Form, useRevalidator } from "react-router";
 import { Link, type LoaderFunctionArgs, useLoaderData } from "react-router";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ import type { FinancesResp } from "~/types/finances";
 import { GetPaginationControls } from "~/utils/PaginationControls";
 import { getPaginationQueryPayload } from "~/utils/PaginationQueryPayload";
 import { Input } from "~/components/ui/input";
+import type { RegistrationStatus } from "@uni-events-hq/db";
 
 export const meta = () => [{ title: "Event Finances | Treasurer" }];
 
@@ -53,15 +54,15 @@ export default function FinancesPage() {
 	const registrations = financesData?.registrations ?? [];
 	const pagination = financesData?.pagination;
 
-	async function updateStatus(_: string, __: string) {
-		// const treasurerApi = createTreasurerApi();
-		// const resp = await treasurerApi.updateRegistrationStatus(registrationId, newStatus);
-		// if (resp.success) {
-		// 	toast.success("Status updated");
-		// 	revalidator.revalidate();
-		// } else {
-		// 	toast.error(resp.error?.message || "Failed to update status");
-		// }
+	async function updateStatus(registrationId: string, status: RegistrationStatus) {
+		const treasurerApi = createEventsApi();
+		const resp = await treasurerApi.updateRegistrationStatus(registrationId, status);
+		if (resp.success) {
+			toast.success("Status updated");
+			revalidator.revalidate();
+		} else {
+			toast.error(resp.error?.message || "Failed to update status");
+		}
 	}
 
 	const tableColumns: ColumnDef<FinancesResp["registrations"][number]>[] = [
@@ -142,27 +143,37 @@ export default function FinancesPage() {
 				return (
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<Button variant="ghost" className="h-8 w-8 p-0">
-								<MoreHorizontal className="h-4 w-4" />
+							<Button variant="ghost" className="p-0">
+								<Pencil className="h-4 w-4" />
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
-							{reg.status === "pending_verification" && (
-								<>
-									<DropdownMenuItem
-										onClick={() => updateStatus(reg.registrationId, "payment_verified")}
-									>
-										<Check className="mr-2 h-4 w-4" />
-										Mark as Paid
-									</DropdownMenuItem>
-									<DropdownMenuItem
-										onClick={() => updateStatus(reg.registrationId, "cancelled")}
-									>
-										<X className="mr-2 h-4 w-4" />
-										Cancel
-									</DropdownMenuItem>
-								</>
+							{row.original.status !== "registered" && (
+								<DropdownMenuItem
+									onClick={() => updateStatus(reg.registrationId, "registered")}
+								>
+									<Check className="mr-2 h-4 w-4" />
+									Confirm Registration
+								</DropdownMenuItem>
 							)}
+							<DropdownMenuItem onClick={() => updateStatus(reg.registrationId, "attended")}>
+								<Check className="mr-2 h-4 w-4" />
+								Mark as Attended
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={() => updateStatus(reg.registrationId, "absent")}
+								variant="destructive"
+							>
+								<Check className="mr-2 h-4 w-4" />
+								Mark as Absentee
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={() => updateStatus(reg.registrationId, "cancelled")}
+								variant="destructive"
+							>
+								<X className="mr-2 h-4 w-4" />
+								Cancel Registration
+							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
 				);
