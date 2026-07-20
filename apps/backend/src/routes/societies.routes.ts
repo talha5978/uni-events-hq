@@ -435,4 +435,80 @@ export async function societiesRoutes(fastify: FastifyInstance) {
 			);
 		},
 	);
+
+	fastify.get(
+		"/treasurer/bank-accounts",
+		{ preHandler: [studentAuthMiddleware, requireRole(["treasurer"])] },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const societyId = request.user?.societyId;
+
+			if (!societyId) {
+				throw new ApiError("No society associated with user", 400, "NO_SOCIETY");
+			}
+
+			const accounts = await fastify.db
+				.select()
+				.from(societyBankAccounts)
+				.where(eq(societyBankAccounts.societyId, societyId))
+				.orderBy(desc(societyBankAccounts.createdAt));
+
+			return reply.success({ accounts });
+		},
+	);
+
+	fastify.post(
+		"/treasurer/bank-accounts",
+		{ preHandler: [studentAuthMiddleware, requireRole(["treasurer"])] },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const societyId = request.user?.societyId;
+			const userId = request.user?.id;
+
+			if (!societyId || !userId) {
+				throw new ApiError("No society associated with user", 400, "NO_SOCIETY");
+			}
+
+			const { accountTitle, accountNumber, bankName } = request.body as {
+				accountTitle: string;
+				accountNumber: string;
+				bankName: string;
+			};
+
+			const [newAccount] = await fastify.db
+				.insert(societyBankAccounts)
+				.values({
+					societyId,
+					accountTitle: accountTitle.trim(),
+					accountNumber: accountNumber.trim(),
+					bankName: bankName.trim(),
+					addedBy: userId,
+				})
+				.returning();
+
+			return reply.success({ account: newAccount }, "Bank account added successfully", 201);
+		},
+	);
+
+	fastify.delete(
+		"/treasurer/bank-accounts/:id",
+		{ preHandler: [studentAuthMiddleware, requireRole(["treasurer"])] },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const { id } = request.params as { id: string };
+			const societyId = request.user?.societyId;
+
+			if (!societyId) {
+				throw new ApiError("No society associated with user", 400, "NO_SOCIETY");
+			}
+
+			const deleted = await fastify.db
+				.delete(societyBankAccounts)
+				.where(and(eq(societyBankAccounts.id, id), eq(societyBankAccounts.societyId, societyId)))
+				.returning();
+
+			if (deleted.length === 0) {
+				throw new ApiError("Bank account not found or not yours", 404, "NOT_FOUND");
+			}
+
+			return reply.success(null, "Bank account deleted successfully");
+		},
+	);
 }

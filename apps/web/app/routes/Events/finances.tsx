@@ -22,6 +22,7 @@ import { GetPaginationControls } from "~/utils/PaginationControls";
 import { getPaginationQueryPayload } from "~/utils/PaginationQueryPayload";
 import { Input } from "~/components/ui/input";
 import type { RegistrationStatus } from "@uni-events-hq/db";
+import { RoleGuard } from "~/components/Auth/RoleGaurd";
 
 export const meta = () => [{ title: "Event Finances | Treasurer" }];
 
@@ -228,50 +229,52 @@ export default function FinancesPage() {
 	}
 
 	return (
-		<div className="flex-1 flex flex-col gap-6 p-6">
-			<h1 className="text-3xl font-semibold tracking-tight">Finances</h1>
+		<RoleGuard allowedRoles={["treasurer"]}>
+			<div className="flex-1 flex flex-col gap-6 p-6">
+				<h1 className="text-3xl font-semibold tracking-tight">Finances</h1>
 
-			<div className="space-y-4">
-				<div className="flex justify-between items-center">
-					<Form method="get" className="max-w-sm">
-						<div className="relative">
-							<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-							<Input
-								placeholder="Search by name, email or student ID..."
-								name="q"
-								className="pl-10 max-w-sm"
-							/>
-						</div>
-					</Form>
+				<div className="space-y-4">
+					<div className="flex justify-between items-center">
+						<Form method="get" className="max-w-sm">
+							<div className="relative">
+								<Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+								<Input
+									placeholder="Search by name, email or student ID..."
+									name="q"
+									className="pl-10 max-w-sm"
+								/>
+							</div>
+						</Form>
 
-					<TableColumnsToggle table={table} />
-				</div>
-
-				<DataTable
-					table={table}
-					onPageChange={onPageChange}
-					onPageSizeChange={onPageSizeChange}
-					pageSize={pagination?.pageSize || 15}
-					total={pagination?.total || 0}
-				/>
-			</div>
-			<Dialog open={!!selectedProof} onOpenChange={() => setSelectedProof(null)}>
-				<DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-					<DialogHeader>
-						<DialogTitle>Payment Proof</DialogTitle>
-					</DialogHeader>
-
-					<div className="flex-1 overflow-y-auto rounded-lg border bg-muted/20 p-2">
-						{selectedProof && (
-							<img
-								src={selectedProof}
-								alt="Payment Proof"
-								className="w-full h-auto object-cover rounded-md"
-							/>
-						)}
+						<TableColumnsToggle table={table} />
 					</div>
-				</DialogContent>
-			</Dialog>
-		</div>
+
+					<DataTable
+						table={table}
+						onPageChange={onPageChange}
+						onPageSizeChange={onPageSizeChange}
+						pageSize={pagination?.pageSize || 15}
+						total={pagination?.total || 0}
+					/>
+				</div>
+				<Dialog open={!!selectedProof} onOpenChange={() => setSelectedProof(null)}>
+					<DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+						<DialogHeader>
+							<DialogTitle>Payment Proof</DialogTitle>
+						</DialogHeader>
+
+						<div className="flex-1 overflow-y-auto rounded-lg border bg-muted/20 p-2">
+							{selectedProof && (
+								<img
+									src={selectedProof}
+									alt="Payment Proof"
+									className="w-full h-auto object-cover rounded-md"
+								/>
+							)}
+						</div>
+					</DialogContent>
+				</Dialog>
+			</div>
+		</RoleGuard>
 	);
 }

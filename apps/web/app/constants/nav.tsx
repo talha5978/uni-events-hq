@@ -1,4 +1,4 @@
-import { LayoutDashboard, Building2, Calendar, Clock, Users, Settings } from "lucide-react";
+import { LayoutDashboard, Building2, Calendar, Clock, Users, Settings, CreditCard } from "lucide-react";
 import type { NavItem } from "~/types/nav";
 
 export const navLinks: NavItem[] = [
@@ -44,6 +44,13 @@ export const navLinks: NavItem[] = [
 		title: "Finances",
 		url: "/finances",
 		icon: <Settings size={18} />,
+		allowedRoles: ["treasurer"],
+	},
+
+	{
+		title: "Bank Accounts",
+		url: "/society-bank-accounts",
+		icon: <CreditCard size={18} />,
 		allowedRoles: ["treasurer"],
 	},
 ];
