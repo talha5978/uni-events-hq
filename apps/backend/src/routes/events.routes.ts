@@ -6,7 +6,7 @@ import {
 	users,
 	type RegistrationStatus,
 } from "@uni-events-hq/db";
-import { and, count, desc, eq, getTableColumns, gt, gte, ilike, lte, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, getTableColumns, ilike, or } from "drizzle-orm";
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { requireRole, studentAuthMiddleware } from "~/middlewares/auth.middleware";
 import { ApiError } from "~/utils/ApiError";
