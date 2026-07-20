@@ -139,6 +139,7 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 					},
 				},
 			},
+			preHandler: [studentAuthMiddleware],
 		},
 		async (request: FastifyRequest, reply: FastifyReply) => {
 			const { pageSize = "12", status = "all" } = request.query as {
@@ -146,18 +147,20 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 				status?: "all" | "active";
 			};
 
+			const user = request.user;
+
+			if (user == null) {
+				throw new ApiError("User not found", 400, "NO_USER_ID");
+			}
+
 			const limit = parseInt(pageSize);
 
 			let whereCondition = undefined;
 
 			if (status === "active") {
-				whereCondition = or(
-					gt(events.eventDate, new Date()),
-					and(
-						lte(events.eventDate, new Date()),
-						gte(events.eventDate, sql`NOW() - INTERVAL '14 days'`),
-					),
-				);
+				if (user.role === "treasurer" || user.role === "member" || user.role === "student") {
+					whereCondition = eq(events.status, "ongoing") || eq(events.status, "upcoming");
+				}
 			}
 
 			const eventsList = await fastify.db
