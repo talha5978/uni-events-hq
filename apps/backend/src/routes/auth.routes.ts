@@ -26,6 +26,36 @@ export async function authRoutes(fastify: FastifyInstance) {
 		);
 	});
 
+	fastify.get(
+		"/student/details",
+		{ preHandler: [studentAuthMiddleware] },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const userId = request.user?.id;
+
+			if (!userId) {
+				throw new ApiError("User not found", 404, "USER_NOT_FOUND");
+			}
+
+			const user = await fastify.db.query.users.findFirst({
+				where: eq(users.id, userId),
+				columns: {
+					id: true,
+					fullName: true,
+					email: true,
+					role: true,
+					studentId: true,
+					avatarUrl: true,
+				},
+			});
+
+			if (!user) {
+				throw new ApiError("User not found", 404, "USER_NOT_FOUND");
+			}
+
+			return reply.success({ user }, "Student details fetched successfully");
+		},
+	);
+
 	fastify.post("/refresh-token", async (request: FastifyRequest, reply: FastifyReply) => {
 		const isAdminRefresh = !!request.cookies?.adminRefreshToken;
 		const refreshToken = request.cookies?.adminRefreshToken || request.cookies?.studentRefreshToken;

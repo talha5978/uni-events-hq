@@ -1,6 +1,7 @@
 import type { ApiResponse } from "~/types/response";
 import type { UserPayload } from "@uni-events-hq/auth";
 import { createApiClient } from "~/api/client";
+import type { RawUserRole } from "@uni-events-hq/db";
 
 export function createAuthApi(client = createApiClient()) {
 	return {
@@ -12,6 +13,21 @@ export function createAuthApi(client = createApiClient()) {
 					user: UserPayload;
 				}>
 			>("/auth/student/me");
+		},
+
+		async myDetails() {
+			return await client.request<
+				ApiResponse<{
+					user: {
+						id: string;
+						email: string;
+						fullName: string;
+						studentId: string | null;
+						role: RawUserRole;
+						avatarUrl: string | null;
+					};
+				}>
+			>("/auth/student/details");
 		},
 
 		async signIn(data: { email: string; password: string }) {
