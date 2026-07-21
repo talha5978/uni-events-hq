@@ -1,4 +1,4 @@
-import { useLoaderData, type LoaderFunctionArgs } from "react-router";
+import { useLoaderData, useRevalidator, type LoaderFunctionArgs } from "react-router";
 import {
 	Users,
 	Building2,
@@ -20,6 +20,8 @@ import { Link } from "react-router";
 import { createApiClient } from "~/api/client";
 import { createDashboardApi } from "~/api/dashboard.api";
 import { format } from "date-fns";
+import { createStudentsApi } from "~/api/students.api";
+import { toast } from "sonner";
 
 export const meta = () => [{ title: "Dashboard | Admin Portal" }];
 
@@ -117,6 +119,7 @@ const getRegStatusBadge = (status: string) => {
 export default function AdminDashboard() {
 	const loaderData = useLoaderData<typeof loader>();
 	const data = loaderData.success ? loaderData.data : null;
+	const revalidator = useRevalidator();
 
 	if (!data)
 		return (
@@ -127,6 +130,17 @@ export default function AdminDashboard() {
 		);
 
 	const { metrics, pendingStudents, recentEvents, recentRegistrations } = data;
+
+	async function toggleVerification(studentId: string) {
+		const studentsApi = createStudentsApi();
+		const resp = await studentsApi.toggleVerification(studentId);
+		if (resp.success) {
+			toast.success(resp.message);
+			revalidator.revalidate();
+		} else {
+			toast.error(resp.error.message || "Something went wrong. Please try again.");
+		}
+	}
 
 	return (
 		<div className="p-4 sm:p-6 lg:p-8 space-y-8">
@@ -241,7 +255,7 @@ export default function AdminDashboard() {
 							</div>
 							{pendingStudents.length > 0 && (
 								<Link
-									to="/admin/students?tab=pending"
+									to="/students"
 									className="text-sm font-medium text-primary hover:underline flex items-center"
 								>
 									View All <ArrowRight className="h-4 w-4 ml-1" />
@@ -265,7 +279,7 @@ export default function AdminDashboard() {
 										</TableRow>
 									</TableHeader>
 									<TableBody>
-										{pendingStudents.slice(0, 5).map((student: any) => (
+										{pendingStudents.slice(0, 5).map((student) => (
 											<TableRow
 												key={student.id}
 												className="hover:bg-muted/30 transition-colors"
@@ -299,15 +313,15 @@ export default function AdminDashboard() {
 													{format(new Date(student.createdAt), "MMM d, yyyy")}
 												</TableCell>
 												<TableCell className="text-right pr-6">
-													<Link to={`/admin/students/${student.id}`}>
-														<Button
-															size="sm"
-															variant="secondary"
-															className="hover:bg-primary hover:text-primary-foreground transition-colors"
-														>
-															Review
-														</Button>
-													</Link>
+													<Button
+														size="sm"
+														variant="secondary"
+														className="hover:bg-primary hover:text-primary-foreground transition-colors"
+														onClick={() => toggleVerification(student.id)}
+														type="button"
+													>
+														Review
+													</Button>
 												</TableCell>
 											</TableRow>
 										))}
@@ -330,7 +344,7 @@ export default function AdminDashboard() {
 								</div>
 							) : (
 								<div className="divide-y divide-border/50">
-									{recentRegistrations.slice(0, 6).map((reg: any) => (
+									{recentRegistrations.slice(0, 6).map((reg) => (
 										<div
 											key={reg.registrationId}
 											className="flex items-center justify-between p-4 sm:px-6 hover:bg-muted/20 transition-colors"
@@ -374,7 +388,7 @@ export default function AdminDashboard() {
 								<div className="p-8 text-center text-muted-foreground">No events found.</div>
 							) : (
 								<div className="divide-y divide-border/50">
-									{recentEvents.slice(0, 7).map((event: any) => (
+									{recentEvents.slice(0, 7).map((event) => (
 										<Link
 											key={event.id}
 											to={`/admin/events/${event.id}`}
