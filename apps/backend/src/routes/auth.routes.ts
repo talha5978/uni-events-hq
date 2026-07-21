@@ -362,30 +362,26 @@ export async function authRoutes(fastify: FastifyInstance) {
 	);
 
 	/** Signout */
-	fastify.post(
-		"/signout",
-		{ preHandler: adminAuthMiddleware },
-		async (request: FastifyRequest, reply: FastifyReply) => {
-			const { isAdmin } = request.query as { isAdmin?: string };
+	fastify.post("/signout", async (request: FastifyRequest, reply: FastifyReply) => {
+		const { isAdmin } = request.query as { isAdmin?: string };
 
-			const cookieOptions: CookieSerializeOptions | undefined = {
-				path: "/",
-				httpOnly: true,
-				secure: process.env.NODE_ENV === "production",
-				sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-			};
+		const cookieOptions: CookieSerializeOptions | undefined = {
+			path: "/",
+			httpOnly: true,
+			secure: process.env.NODE_ENV === "production",
+			sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+		};
 
-			if (isAdmin === "true") {
-				reply
-					.clearCookie("adminAuthToken", cookieOptions)
-					.clearCookie("adminRefreshToken", cookieOptions);
-			} else {
-				reply
-					.clearCookie("studentAuthToken", cookieOptions)
-					.clearCookie("studentRefreshToken", cookieOptions);
-			}
+		if (isAdmin === "true") {
+			reply
+				.clearCookie("adminAuthToken", cookieOptions)
+				.clearCookie("adminRefreshToken", cookieOptions);
+		} else {
+			reply
+				.clearCookie("studentAuthToken", cookieOptions)
+				.clearCookie("studentRefreshToken", cookieOptions);
+		}
 
-			return reply.success(null, "Logged out successfully");
-		},
-	);
+		return reply.success(null, "Logged out successfully");
+	});
 }

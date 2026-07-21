@@ -521,4 +521,41 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 			});
 		},
 	);
+
+	fastify.get(
+		"/my-registrations",
+		{ preHandler: [studentAuthMiddleware, requireRole(["student", "treasurer", "member"])] },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const userId = request.user?.id;
+
+			if (!userId) {
+				throw new ApiError("User not found", 404, "USER_NOT_FOUND");
+			}
+
+			const registrations = await fastify.db
+				.select({
+					registrationId: eventRegistrations.id,
+					status: eventRegistrations.status,
+					selectedTimeslot: eventRegistrations.selectedTimeslot,
+					registeredAt: eventRegistrations.registeredAt,
+
+					// Event info
+					eventTitle: events.title,
+					eventBanner: events.bannerUrl,
+					eventDate: events.eventDate,
+					eventLocation: events.location,
+					isPaid: events.isPaid,
+
+					// QR Code
+					qrCodeId: qrCodes.id,
+				})
+				.from(eventRegistrations)
+				.leftJoin(events, eq(eventRegistrations.eventId, events.id))
+				.leftJoin(qrCodes, eq(qrCodes.eventRegistrationId, eventRegistrations.id))
+				.where(eq(eventRegistrations.userId, userId))
+				.orderBy(desc(eventRegistrations.registeredAt));
+
+			return reply.success({ registrations }, "Registrations retrieved successfully");
+		},
+	);
 }

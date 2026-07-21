@@ -20,6 +20,8 @@ export default [
 		route("register-event/:id", "./routes/Events/register-event.tsx"),
 		route("registration-success", "./routes/Events/registration-success.tsx"),
 
+		route("my-registrations", "./routes/Events/my-registrations.tsx"),
+
 		route("finances", "./routes/Events/finances.tsx"),
 
 		route("society-bank-accounts", "./routes/Societies/society-bank-accounts.tsx"),

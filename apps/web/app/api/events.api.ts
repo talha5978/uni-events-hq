@@ -154,5 +154,24 @@ export function createEventsApi(client = createApiClient()) {
 				body: JSON.stringify({ status }),
 			});
 		},
+
+		async getMyRegistrations() {
+			return await client.request<
+				ApiResponse<{
+					registrations: {
+						registrationId: string;
+						status: RegistrationStatus;
+						selectedTimeslot: unknown;
+						registeredAt: Date;
+						eventTitle: string | null;
+						eventBanner: string | null;
+						eventDate: Date | null;
+						eventLocation: string | null;
+						isPaid: boolean | null;
+						qrCodeId: string | null;
+					}[];
+				}>
+			>("/events/my-registrations", { method: "GET" });
+		},
 	};
 }
