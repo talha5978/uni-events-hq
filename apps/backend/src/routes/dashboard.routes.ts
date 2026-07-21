@@ -1,7 +1,8 @@
-import { users, societies, events, eventRegistrations } from "@uni-events-hq/db";
-import { eq, and, desc, count, or } from "drizzle-orm";
+import { users, societies, events, eventRegistrations, societyMembers } from "@uni-events-hq/db";
+import { eq, and, desc, count, or, gt, inArray } from "drizzle-orm";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { adminAuthMiddleware, requireRole } from "~/middlewares/auth.middleware";
+import { adminAuthMiddleware, requireRole, studentAuthMiddleware } from "~/middlewares/auth.middleware";
+import { ApiError } from "~/utils/ApiError";
 
 export const dashboardRoutes = (fastify: FastifyInstance) => {
 	fastify.get(
@@ -82,6 +83,90 @@ export const dashboardRoutes = (fastify: FastifyInstance) => {
 				pendingStudents,
 				recentEvents,
 				recentRegistrations,
+			});
+		},
+	);
+
+	fastify.get(
+		"/president",
+		{ preHandler: [studentAuthMiddleware, requireRole(["president"])] },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const societyId = request.user?.societyId;
+
+			if (!societyId) {
+				throw new ApiError("No society associated", 400, "NO_SOCIETY");
+			}
+
+			// Metrics
+			const totalMembers = await fastify.db
+				.select({ count: count() })
+				.from(societyMembers)
+				.where(eq(societyMembers.societyId, societyId));
+
+			const upcomingEvents = await fastify.db
+				.select({ count: count() })
+				.from(events)
+				.where(and(eq(events.societyId, societyId), gt(events.eventDate, new Date())));
+
+			const pendingPayments = await fastify.db
+				.select({ count: count() })
+				.from(eventRegistrations)
+				.where(
+					and(
+						eq(eventRegistrations.status, "pending_verification"),
+						inArray(
+							eventRegistrations.eventId,
+							fastify.db
+								.select({ id: events.id })
+								.from(events)
+								.where(eq(events.societyId, societyId)),
+						),
+					),
+				);
+
+			// Upcoming Events
+			const recentUpcoming = await fastify.db
+				.select({
+					id: events.id,
+					title: events.title,
+					eventDate: events.eventDate,
+					location: events.location,
+					isPaid: events.isPaid,
+				})
+				.from(events)
+				.where(and(eq(events.societyId, societyId), eq(events.status, "upcoming")))
+				.orderBy(events.eventDate)
+				.limit(5);
+
+			// Pending Registrations
+			const pendingRegistrations = await fastify.db
+				.select({
+					registrationId: eventRegistrations.id,
+					status: eventRegistrations.status,
+					registeredAt: eventRegistrations.registeredAt,
+					studentName: users.fullName,
+					eventTitle: events.title,
+				})
+				.from(eventRegistrations)
+				.leftJoin(users, eq(eventRegistrations.userId, users.id))
+				.leftJoin(events, eq(eventRegistrations.eventId, events.id))
+				.where(
+					and(
+						eq(events.societyId, societyId),
+						eq(eventRegistrations.status, "pending_verification"),
+					),
+				)
+				.orderBy(desc(eventRegistrations.registeredAt))
+				.limit(6);
+
+			return reply.success({
+				metrics: {
+					totalMembers: totalMembers[0].count,
+					upcomingEvents: upcomingEvents[0].count,
+					pendingPayments: pendingPayments[0].count,
+				},
+				recentUpcoming,
+				pendingRegistrations,
 			});
 		},
 	);
