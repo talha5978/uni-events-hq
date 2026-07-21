@@ -11,6 +11,7 @@ import { studentsRoutes } from "~/routes/students.routes";
 import { mediaRoutes } from "~/routes/media.routes";
 import { societiesRoutes } from "~/routes/societies.routes";
 import { eventsRoutes } from "~/routes/events.routes";
+import { dashboardRoutes } from "~/routes/dashboard.routes";
 
 export async function server(fastify: FastifyInstance) {
 	await fastify.register(errorHandlerPlugin);
@@ -56,4 +57,5 @@ export async function server(fastify: FastifyInstance) {
 	await fastify.register(studentsRoutes, { prefix: "/api/students" });
 	await fastify.register(societiesRoutes, { prefix: "/api/societies" });
 	await fastify.register(eventsRoutes, { prefix: "/api/events" });
+	await fastify.register(dashboardRoutes, { prefix: "/api/dashboard" });
 }

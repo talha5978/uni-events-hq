@@ -80,6 +80,10 @@ const getStatusBadge = (status: RegistrationStatus) => {
 	}
 };
 
+export const meta = () => {
+	return [{ title: "My Registrations | Student Portal" }];
+};
+
 export default function MyRegistrationsPage() {
 	const loaderData = useLoaderData<typeof loader>();
 	const registrations = loaderData.success ? loaderData.data.registrations : [];
