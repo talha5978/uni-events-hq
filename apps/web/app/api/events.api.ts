@@ -1,6 +1,6 @@
 import type { ApiResponse } from "~/types/response";
 import { createApiClient } from "~/api/client";
-import type { Event, EventStatus, RegistrationStatus, Timeslot } from "@uni-events-hq/db";
+import type { Event, EventStatus, RegistrationStatus, SocietyBankAccount, Timeslot } from "@uni-events-hq/db";
 import type { FinancesResp } from "~/types/finances";
 
 export function createEventsApi(client = createApiClient()) {
@@ -71,7 +71,12 @@ export function createEventsApi(client = createApiClient()) {
 		},
 
 		async getEventById(id: string) {
-			return await client.request<ApiResponse<{ event: Event }>>(`/events/${id}`, { method: "GET" });
+			return await client.request<ApiResponse<{ event: Event; bankAccounts: SocietyBankAccount[] }>>(
+				`/events/${id}`,
+				{
+					method: "GET",
+				},
+			);
 		},
 
 		async updateEvent(

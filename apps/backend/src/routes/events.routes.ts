@@ -2,6 +2,7 @@ import {
 	eventRegistrations,
 	events,
 	qrCodes,
+	societyBankAccounts,
 	societyMembers,
 	users,
 	type RegistrationStatus,
@@ -159,7 +160,7 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 
 			if (status === "active") {
 				if (user.role === "treasurer" || user.role === "member" || user.role === "student") {
-					whereCondition = eq(events.status, "ongoing") || eq(events.status, "upcoming");
+					whereCondition = or(eq(events.status, "ongoing"), eq(events.status, "upcoming"));
 				}
 			}
 
@@ -198,15 +199,33 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 		async (request: FastifyRequest, reply: FastifyReply) => {
 			const { id } = request.params as { id: string };
 
-			const event = await fastify.db.query.events.findFirst({
-				where: eq(events.id, id),
-			});
+			const eventData = await fastify.db.select().from(events).where(eq(events.id, id));
 
-			if (!event) {
+			if (eventData.length === 0) {
 				throw new ApiError("Event not found", 404, "EVENT_NOT_FOUND");
 			}
 
-			return reply.success({ event }, "Event details retrieved successfully");
+			const event = eventData[0];
+
+			// Fetch event's society bank accounts
+			const bankAccounts = await fastify.db
+				.select()
+				.from(societyBankAccounts)
+				.where(
+					and(
+						eq(societyBankAccounts.societyId, event.societyId),
+						eq(societyBankAccounts.isActive, true),
+					),
+				)
+				.orderBy(societyBankAccounts.createdAt);
+
+			return reply.success(
+				{
+					event,
+					bankAccounts,
+				},
+				"Event details retrieved successfully",
+			);
 		},
 	);
 

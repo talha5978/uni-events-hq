@@ -177,7 +177,7 @@ export default function SocietyDetailPage() {
 															</p>
 														)}
 													</div>
-													<Badge>{event.status}</Badge>
+													<Badge>{event.status.toUpperCase()}</Badge>
 												</div>
 											</div>
 										))}

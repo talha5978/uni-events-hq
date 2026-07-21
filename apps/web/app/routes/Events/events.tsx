@@ -21,7 +21,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		pageSize: 12,
 		status: "active",
 	});
-
+	console.log(data);
 	return data;
 };
 
