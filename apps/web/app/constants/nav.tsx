@@ -4,8 +4,9 @@ import type { NavItem } from "~/types/nav";
 export const navLinks: NavItem[] = [
 	{
 		title: "Home",
-		url: "/",
+		url: "/dashboard",
 		icon: <LayoutDashboard size={18} />,
+		allowedRoles: ["president"],
 	},
 	{
 		title: "Events",
