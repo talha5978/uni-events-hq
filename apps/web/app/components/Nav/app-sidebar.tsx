@@ -10,6 +10,7 @@ import {
 } from "~/components/ui/sidebar";
 import { Link } from "react-router";
 import { LogoutButton } from "~/components/Auth/LogoutButton";
+import QrScannerButton from "~/components/QrScannerButton";
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 	return (
@@ -28,7 +29,8 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 			<SidebarContent>
 				<NavMain />
 			</SidebarContent>
-			<SidebarFooter className="mt-6">
+			<SidebarFooter className="mt-6 space-y-3">
+				<QrScannerButton />
 				<LogoutButton />
 			</SidebarFooter>
 		</Sidebar>

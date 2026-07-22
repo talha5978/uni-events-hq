@@ -577,4 +577,83 @@ export async function eventsRoutes(fastify: FastifyInstance) {
 			return reply.success({ registrations }, "Registrations retrieved successfully");
 		},
 	);
+
+	// POST /scan-qr
+	fastify.post(
+		"/scan-qr",
+		{ preHandler: [studentAuthMiddleware, requireRole(["member", "president", "treasurer"])] },
+		async (request: FastifyRequest, reply: FastifyReply) => {
+			const { qrCodeId } = request.body as { qrCodeId: string };
+
+			if (!qrCodeId) {
+				throw new ApiError("QR Code ID is required", 400, "MISSING_QR_ID");
+			}
+
+			const result = await fastify.db.transaction(async (tx) => {
+				const qrData = await tx
+					.select({
+						qrCodeId: qrCodes.id,
+						registrationId: eventRegistrations.id,
+						status: eventRegistrations.status,
+						scannedAt: eventRegistrations.scannedAt,
+						selectedTimeslot: eventRegistrations.selectedTimeslot,
+
+						// Event details
+						eventId: events.id,
+						eventTitle: events.title,
+						eventDate: events.eventDate,
+						eventLocation: events.location,
+
+						// User details
+						userId: users.id,
+						fullName: users.fullName,
+						studentId: users.studentId,
+					})
+					.from(qrCodes)
+					.leftJoin(eventRegistrations, eq(qrCodes.eventRegistrationId, eventRegistrations.id))
+					.leftJoin(events, eq(eventRegistrations.eventId, events.id))
+					.leftJoin(users, eq(eventRegistrations.userId, users.id))
+					.where(eq(qrCodes.id, qrCodeId));
+
+				if (qrData.length === 0) {
+					throw new ApiError("Invalid or expired QR Code", 404, "INVALID_QR");
+				}
+
+				const data = qrData[0];
+
+				if (!data || !data.registrationId) {
+					throw new ApiError("Registration not found", 404, "REGISTRATION_NOT_FOUND");
+				}
+
+				// Update scannedAt and mark as attended
+				await tx
+					.update(eventRegistrations)
+					.set({
+						scannedAt: new Date(),
+						status: "attended",
+					})
+					.where(eq(eventRegistrations.id, data.registrationId));
+
+				return data;
+			});
+
+			return reply.success(
+				{
+					event: {
+						id: result.eventId,
+						title: result.eventTitle,
+						date: result.eventDate,
+						location: result.eventLocation,
+					},
+					student: {
+						name: result.fullName,
+						studentId: result.studentId,
+						selectedTimeslot: result.selectedTimeslot,
+					},
+					status: "attended",
+				},
+				"QR Code scanned successfully",
+			);
+		},
+	);
 }

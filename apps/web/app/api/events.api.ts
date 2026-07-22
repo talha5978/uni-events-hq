@@ -178,5 +178,27 @@ export function createEventsApi(client = createApiClient()) {
 				}>
 			>("/events/my-registrations", { method: "GET" });
 		},
+
+		async scanQR(qrCodeId: string) {
+			return await client.request<
+				ApiResponse<{
+					event: {
+						id: string | null;
+						title: string | null;
+						date: Date | null;
+						location: string | null;
+					};
+					student: {
+						name: string | null;
+						studentId: string | null;
+						selectedTimeslot: Timeslot | null;
+					};
+					status: string;
+				}>
+			>("/events/scan-qr", {
+				method: "POST",
+				body: JSON.stringify({ qrCodeId }),
+			});
+		},
 	};
 }

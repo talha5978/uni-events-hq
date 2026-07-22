@@ -22,6 +22,8 @@ export default [
 
 		route("my-registrations", "./routes/Events/my-registrations.tsx"),
 
+		route("qr/:id/view", "./routes/Events/qr-view.tsx"),
+
 		route("finances", "./routes/Events/finances.tsx"),
 
 		route("society-bank-accounts", "./routes/Societies/society-bank-accounts.tsx"),

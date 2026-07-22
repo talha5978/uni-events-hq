@@ -478,6 +478,9 @@ importers:
             date-fns:
                 specifier: ^4.4.0
                 version: 4.4.0
+            html5-qrcode:
+                specifier: ^2.3.8
+                version: 2.3.8
             isbot:
                 specifier: ^5.1.36
                 version: 5.2.1
@@ -5047,6 +5050,12 @@ packages:
                 integrity: sha512-emn+JoJjrN9YTpRDS5it/UI2SO9BAE37T6I3d963RxcZ81G9A4pr2SZTEiiaiKbzx+NKRg5BZ89fCL7gCJCUog==,
             }
         engines: { node: ">=16.9.0" }
+
+    html5-qrcode@2.3.8:
+        resolution:
+            {
+                integrity: sha512-jsr4vafJhwoLVEDW3n1KvPnCCXWaQfRng0/EEYk1vNcQGcG/htAdhJX0be8YyqMoSz7+hZvOZSTAepsabiuhiQ==,
+            }
 
     http-errors@2.0.1:
         resolution:
@@ -10004,6 +10013,8 @@ snapshots:
             react-is: 16.13.1
 
     hono@4.12.30: {}
+
+    html5-qrcode@2.3.8: {}
 
     http-errors@2.0.1:
         dependencies:
