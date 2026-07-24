@@ -1,0 +1,1 @@
+DROP TABLE "society_subscriptions" CASCADE;

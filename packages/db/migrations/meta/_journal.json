@@ -15,6 +15,13 @@
 			"when": 1784565746575,
 			"tag": "0001_mute_impossible_man",
 			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "7",
+			"when": 1784884952098,
+			"tag": "0002_cooing_lilith",
+			"breakpoints": true
 		}
 	]
 }

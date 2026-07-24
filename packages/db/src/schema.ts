@@ -192,21 +192,6 @@ export const eventRegistrations = pgTable(
 	],
 );
 
-export const societySubscriptions = pgTable(
-	"society_subscriptions",
-	{
-		id: uuid("id").defaultRandom().primaryKey(),
-		societyId: uuid("society_id")
-			.references(() => societies.id, { onDelete: "cascade" })
-			.notNull(),
-		userId: uuid("user_id")
-			.references(() => users.id, { onDelete: "cascade" })
-			.notNull(),
-		subscribedAt: timestamp("subscribed_at", { withTimezone: true }).defaultNow().notNull(),
-	},
-	(table) => [uniqueIndex("subscriptions_unique").on(table.societyId, table.userId)],
-);
-
 export const qrCodes = pgTable(
 	"qr_codes",
 	{
@@ -233,6 +218,5 @@ export const schema = {
 	societyMembers,
 	events,
 	eventRegistrations,
-	societySubscriptions,
 	qrCodes,
 } as const;
